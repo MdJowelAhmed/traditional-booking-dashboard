@@ -25,33 +25,36 @@ interface EarningsSummaryChartProps {
 }
 
 
-const generateTicks = (max: number) => {
-    if (max === 0) return [0, 25, 50, 75, 100];
+/** 10 intervals (11 ticks: 0 … 10×step). Data should sit under the 10th tick; 9×step covers up to max. */
+const Y_INTERVALS = 10
 
-    // Calculate a nice step size
-    // We want 5 intervals (0 to max split 4 times) so 5 ticks total including 0
-    const roughStep = max / 10;
+function niceStepSize(rough: number): number {
+    if (rough <= 0) return 1
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rough)))
+    const normalized = rough / magnitude
+    let nice: number
+    if (normalized <= 1) nice = 1
+    else if (normalized <= 2) nice = 2
+    else if (normalized <= 2.5) nice = 2.5
+    else if (normalized <= 5) nice = 5
+    else nice = 10
+    return nice * magnitude
+}
 
-    // Round step to a "nice" number (like 10, 20, 25, 50, 100 etc)
-    const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
-    const normalizedStep = roughStep / magnitude;
-
-    let niceStep;
-    if (normalizedStep <= 1) niceStep = 1;
-    else if (normalizedStep <= 2) niceStep = 2;
-    else if (normalizedStep <= 2.5) niceStep = 2.5;
-    else if (normalizedStep <= 5) niceStep = 5;
-    else if (normalizedStep <= 10) niceStep = 10;
-    else niceStep = 10;
-
-    const step = niceStep * magnitude;
-
-    const ticks = [];
-    for (let i = 0; i <= 10; i++) {
-        ticks.push(i * step);
+function generateTicks(dataMax: number): number[] {
+    if (dataMax <= 0) {
+        const step = 100
+        return Array.from({ length: Y_INTERVALS + 1 }, (_, i) => i * step)
     }
-    return ticks;
-};
+    let step = niceStepSize(dataMax / 9)
+    let guard = 0
+    while (9 * step < dataMax && guard < 24) {
+        step = niceStepSize(step * 1.05)
+        guard += 1
+    }
+    const yTop = step * Y_INTERVALS
+    return Array.from({ length: Y_INTERVALS + 1 }, (_, i) => (i / Y_INTERVALS) * yTop)
+}
 
 const strKFormatter = (num: number) => {
     if (num > 999) {
@@ -62,11 +65,17 @@ const strKFormatter = (num: number) => {
 
 const CHART_GREEN = '#70B72B'
 
+function formatTooltipExact(value: unknown): string {
+    const n = typeof value === 'number' ? value : Number(value)
+    if (!Number.isFinite(n)) return ''
+    return Math.round(n).toLocaleString('en-US')
+}
+
 const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
         return (
             <div className="relative rounded-md bg-[#364355] px-3 py-1.5 text-sm font-medium text-white shadow-lg">
-                <p>{strKFormatter(payload[0].value)}</p>
+                <p>{formatTooltipExact(payload[0].value)}</p>
                 <div className="absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 translate-y-1/2 rotate-45 bg-[#364355]" />
             </div>
         )
@@ -75,6 +84,9 @@ const CustomTooltip = ({ active, payload }: any) => {
 }
 
 export function EarningsSummaryChart({ chartData, selectedYear, onYearChange }: EarningsSummaryChartProps) {
+    const dataMax = Math.max(...chartData.map((d) => d.revenue), 0)
+    const yTicks = generateTicks(dataMax)
+    const yDomainMax = yTicks[yTicks.length - 1] ?? 1
 
     return (
         <motion.div
@@ -133,8 +145,8 @@ export function EarningsSummaryChart({ chartData, selectedYear, onYearChange }: 
                                     tick={{ fill: '#6B7280', fontSize: 12 }}
                                     tickFormatter={(value) => strKFormatter(value)}
                                     allowDataOverflow={false}
-                                    domain={[0, 'dataMax']}
-                                    ticks={generateTicks(Math.max(...chartData.map((d) => d.revenue), 1))}
+                                    domain={[0, yDomainMax]}
+                                    ticks={yTicks}
                                 />
                                 <Tooltip content={<CustomTooltip />} cursor={{ stroke: CHART_GREEN, strokeWidth: 1, strokeDasharray: '4 4' }} />
                                 <Area

@@ -2,25 +2,20 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 export type ChartDataPoint = {
     month: string
-    /** Sales Overview chart uses this (Y-axis shows e.g. 5k when revenue is 5000). */
+    /** Sales Overview: `revenue` is exact; axis labels may abbreviate (e.g. 5k), tooltip shows full amount. */
     revenue: number
     users: number
     orders: number
 }
 
-/** চার্টে ডিফল্ট যে বছর সিলেক্ট থাকবে (রানটাইমে বর্তমান ক্যালেন্ডার বছর) */
 export const PRESENT_YEAR = String(new Date().getFullYear())
 
-/**
- * বর্তমান বছরের Sales — ১২টা নম্বর Jan→Dec। শুধু এখানে এডিট করলে **এই বছরের** চার্ট বদলাবে।
- */
 export const salesRevenuePresentYear: readonly number[] = [
-    3200, 4800, 4100, 5500, 7200, 9500, 4000, 7500, 5300, 6800, 4900, 5100,
+    3200, 12800, 3100, 8500, 15200, 9500, 4000, 11500, 5300, 16800, 4900, 8100,
 ]
 
-/** ঐতিহাসিক বছর (বর্তমান বছর বাদে) — ক্যালেন্ডার বছর বাড়লে এখানে নতুন পুরোনো বছর যোগ করুন। */
 const salesRevenueByPastYear: Record<string, readonly number[]> = {
-    '2025': [3200, 4800, 4100, 5500, 7200, 9500, 4000, 7500, 5300, 6800, 4900, 5100],
+    '2025': [3200, 8800, 4100, 5500, 7200, 9500, 4000, 7500, 5300, 6800, 4900, 5100],
     '2024': [2800, 4200, 3900, 5000, 6100, 8200, 3800, 6500, 4800, 5900, 4400, 4600],
     '2023': [2400, 3600, 3400, 4200, 5200, 6800, 3200, 5400, 4100, 5000, 3800, 4000],
     '2022': [2000, 3000, 2800, 3500, 4300, 5600, 2700, 4500, 3500, 4200, 3200, 3400],
@@ -32,7 +27,7 @@ export const salesRevenueByYear: Record<string, readonly number[]> = {
     [PRESENT_YEAR]: salesRevenuePresentYear,
 }
 
-/** ড্যাশবোর্ড চার্ট ড্রপডাউনের প্রাথমিক সিলেকশন */
+
 export const defaultChartYear = PRESENT_YEAR
 
 function buildYearlyChartRows(revenues: readonly number[]): ChartDataPoint[] {
