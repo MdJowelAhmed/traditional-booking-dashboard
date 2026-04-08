@@ -12,6 +12,7 @@ import {
   CreditCard,
   HelpCircle,
   ListOrdered,
+  LayoutGrid,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -44,9 +45,12 @@ const navItems: NavItem[] = [
     icon: ListOrdered,
     allowedRoles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE], // All can access
   },
-
-
- 
+  {
+    title: 'My Listing',
+    href: '/my-listing',
+    icon: LayoutGrid,
+    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE],
+  },
   {
     title: 'Calendar',
     href: '/calender',

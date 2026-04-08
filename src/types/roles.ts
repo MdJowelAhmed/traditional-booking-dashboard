@@ -24,6 +24,7 @@ export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
   // Shared routes (all can access)
   '/cars': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE],
   '/booking-management': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE],
+  '/my-listing': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE],
   '/calender': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE],
   '/clients': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE],
   

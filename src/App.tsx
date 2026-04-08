@@ -28,6 +28,8 @@ import Calender from './pages/calender/Calender'
 import TransactionsHistory from './pages/transictions-history/TransactionsHistory'
 import FAQ from './pages/FAQ/FAQ'
 import NotFound from './pages/NotFound/NotFound'
+import MyListingPage from './pages/MyListing/MyListingPage'
+import CreateEditListingPage from './pages/MyListing/CreateEditListingPage'
 
 // Component to redirect based on user role
 function RoleBasedRedirect() {
@@ -132,6 +134,31 @@ function App() {
                 <BookingManagement />
               </RoleBasedRoute>
             } 
+          />
+
+          <Route
+            path="my-listing/new"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE]}>
+                <CreateEditListingPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="my-listing/:id/edit"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE]}>
+                <CreateEditListingPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="my-listing"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.EMPLOYEE]}>
+                <MyListingPage />
+              </RoleBasedRoute>
+            }
           />
      
           
