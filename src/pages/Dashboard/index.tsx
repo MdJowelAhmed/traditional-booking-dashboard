@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react'
 import { formatCurrency, formatCompactNumber } from '@/utils/formatters'
-import { AvailableCars, RentalCars, TotalBooking, TotalRevenue } from '@/components/common/svg/DashboardSVG'
 import { StatCard } from './StatCard'
 import { EarningsSummaryChart } from './EarningsSummaryChart'
 import { RecentBookingsCard } from './RecentBookingsCard'
-import { RecentActivityCard } from './RecentActivityCard'
 import { yearlyData, defaultChartYear } from './dashboardData'
+import { Calendar, CreditCard, ListOrdered, Settings } from 'lucide-react'
 
 export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(defaultChartYear)
@@ -14,31 +13,31 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: 'Total Revenue',
+      title: 'Active Listings',
       value: formatCompactNumber(12543),
       change: 12.5,
-      icon: TotalRevenue,
+      icon: Settings,
       description: 'vs last month',
     },
     {
-      title: 'Total Products',
+      title: 'Upcoming Bookings',
       value: formatCompactNumber(3420),
       change: 8.2,
-      icon: TotalBooking,
+      icon: Calendar,
       description: 'vs last month',
     },
     {
-      title: 'Categories',
+      title: 'Total Orders',
       value: '156',
       change: 3.1,
-      icon: RentalCars,
+      icon: ListOrdered,
       description: 'vs last month',
     },
     {
-      title: 'Total Revenue',
+      title: 'Total Sales',
       value: formatCurrency(845320),
       change: -2.4,
-      icon: AvailableCars,
+      icon: CreditCard,
       description: 'vs last month',
     },
   ]
