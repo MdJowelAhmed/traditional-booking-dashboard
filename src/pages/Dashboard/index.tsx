@@ -67,9 +67,9 @@ export default function Dashboard() {
        </div>
       </div>
 
-      <div>
+      {/* <div>
         <RecentActivityCard />
-      </div>
+      </div> */}
     </div>
   )
 }
