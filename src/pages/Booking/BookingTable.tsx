@@ -142,7 +142,7 @@ export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProp
           <div className="w-full overflow-auto">
             <table className="w-full min-w-[1050px]">
               <thead>
-                <tr className="bg-[#CCF3F5] text-slate-800">
+                <tr className="bg-primary text-slate-800">
                   <th className="px-6 py-4 text-left text-sm font-bold">B.ID</th>
                   <th className="px-6 py-4 text-left text-sm font-bold">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-bold">Time</th>

@@ -115,7 +115,7 @@ export default function AppSlider() {
           <Button
           type="button"
           onClick={openCreate}
-          className="rounded-full bg-[#6BBF2D] hover:bg-[#5aad26] text-white shrink-0 gap-2"
+          className="rounded-md bg-primary hover:bg-[#5aad26] text-white shrink-0 gap-2"
         >
           <Plus className="h-5 w-5" />
           Create New Slider

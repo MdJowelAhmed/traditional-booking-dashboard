@@ -115,7 +115,7 @@ export default function ReviewsRatings() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Average */}
             <div className="flex items-start gap-5 flex-col">
-              <div className="h-[96px] w-[96px] rounded-full bg-[#6BBF2D] text-white flex items-center justify-center">
+              <div className="h-[96px] w-[96px] rounded-full bg-primary text-white flex items-center justify-center">
                 <span className="text-3xl font-bold">{ratingStats.avg.toFixed(1)}</span>
               </div>
               <div>
@@ -144,7 +144,7 @@ export default function ReviewsRatings() {
                     </div>
                     <div className="h-3 w-full rounded-full bg-slate-200 overflow-hidden">
                       <div
-                        className="h-full bg-yellow-400"
+                        className="h-full bg-primary"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
