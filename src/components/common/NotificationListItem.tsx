@@ -19,7 +19,7 @@ export function NotificationListItem({ item, className }: NotificationListItemPr
     >
       {item.variant === 'email' ? (
         <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#6BBF2D]"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary"
           aria-hidden
         >
           <Mail className="h-5 w-5 text-white" />

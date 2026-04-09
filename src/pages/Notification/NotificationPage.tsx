@@ -22,7 +22,7 @@ export default function NotificationPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6"
+      className="space-y-6 bg-white rounded-2xl p-6"
     >
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">

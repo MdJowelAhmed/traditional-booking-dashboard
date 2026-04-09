@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Menu, Bell, LogOut, User, Settings } from 'lucide-react'
+import { Menu, LogOut, User, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -40,7 +39,6 @@ const routeTitles: Record<string, string> = {
 export function Header() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const [notificationOpen, setNotificationOpen] = useState(false)
   // const { theme } = useAppSelector((state) => state.ui)
   const { user } = useAppSelector((state) => state.auth)
   const location = useLocation()
@@ -100,23 +98,8 @@ export function Header() {
             )}
           </Button> */}
 
-          {/* Notifications */}
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative"
-              aria-label="Open notifications"
-              onClick={() => setNotificationOpen(true)}
-            >
-              <Bell className="h-8 w-8 text-accent" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
-            </Button>
-            <NotificationPreviewDialog
-              open={notificationOpen}
-              onOpenChange={setNotificationOpen}
-            />
-          </>
+          {/* Notifications — anchored popover under bell */}
+          <NotificationPreviewDialog />
 
           {/* User menu */}
           <DropdownMenu>
