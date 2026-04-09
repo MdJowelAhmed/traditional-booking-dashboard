@@ -31,7 +31,7 @@ export function SubscriptionTable({ rows, onEdit, onDelete }: SubscriptionTableP
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[900px]">
         <thead>
-          <tr className="bg-[#6BBF2D] text-white">
+          <tr className="bg-primary text-white">
             <th className="px-6 py-4 text-left text-sm font-bold">S.No</th>
             <th className="px-6 py-4 text-left text-sm font-bold">package</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Date</th>
