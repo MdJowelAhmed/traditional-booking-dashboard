@@ -22,6 +22,16 @@ export interface MyListing {
   scheduleBasis: MyListingScheduleBasis
   dailySchedule?: MyListingDailySchedule
   hourlySchedule?: MyListingHourlySchedule
+  /** Host “property” form (optional; business listings omit these) */
+  propertyType?: string
+  sizeSqft?: string
+  /** House / Villa / Apartment */
+  bedrooms?: string
+  bathrooms?: string
+  priceUnit?: string
+  location?: string
+  address?: string
+  facilities?: string
 }
 
 export const HOURLY_DAY_KEYS = [

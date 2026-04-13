@@ -37,7 +37,7 @@ import Support from './pages/Support/Support'
 import FAQ from './pages/FAQ/FAQ'
 import NotFound from './pages/NotFound/NotFound'
 import MyListingPage from './pages/MyListing/MyListingPage'
-import CreateEditListingPage from './pages/MyListing/CreateEditListingPage'
+import { MyListingEditPage, MyListingNewPage } from './pages/MyListing/MyListingFormRoutes'
 
 // Component to redirect based on user role
 function RoleBasedRedirect() {
@@ -208,7 +208,7 @@ function App() {
             path="my-listing/new"
             element={
               <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
-                <CreateEditListingPage />
+                <MyListingNewPage />
               </RoleBasedRoute>
             }
           />
@@ -216,7 +216,7 @@ function App() {
             path="my-listing/:id/edit"
             element={
               <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
-                <CreateEditListingPage />
+                <MyListingEditPage />
               </RoleBasedRoute>
             }
           />
