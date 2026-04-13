@@ -27,6 +27,7 @@ function SliderStatusPill({ status }: { status: AppSliderItem['status'] }) {
 interface AppSliderTableProps {
   sliders: AppSliderItem[]
   isSuperAdmin: boolean
+  currentUserEmail?: string | null
   onEdit: (slider: AppSliderItem) => void
   onDelete: (slider: AppSliderItem) => void
   onApprove: (slider: AppSliderItem) => void
@@ -36,6 +37,7 @@ interface AppSliderTableProps {
 export function AppSliderTable({
   sliders,
   isSuperAdmin,
+  currentUserEmail,
   onEdit,
   onDelete,
   onApprove,
@@ -109,6 +111,7 @@ export function AppSliderTable({
                     <SliderRowActionMenu
                       slider={slider}
                       isSuperAdmin={isSuperAdmin}
+                      currentUserEmail={currentUserEmail}
                       onEdit={onEdit}
                       onDelete={onDelete}
                       onApprove={onApprove}

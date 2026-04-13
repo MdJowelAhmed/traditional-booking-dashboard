@@ -1,10 +1,13 @@
 import { Check, Edit, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { AppSliderItem } from '../sliderData'
+import { isAppSliderOwner } from '../sliderOwnership'
 
 interface SliderRowActionMenuProps {
   slider: AppSliderItem
   isSuperAdmin: boolean
+  /** Logged-in user email (host/business). Used to allow edit/delete only on own sliders. */
+  currentUserEmail?: string | null
   onEdit: (slider: AppSliderItem) => void
   onDelete: (slider: AppSliderItem) => void
   onApprove: (slider: AppSliderItem) => void
@@ -14,6 +17,7 @@ interface SliderRowActionMenuProps {
 export function SliderRowActionMenu({
   slider,
   isSuperAdmin,
+  currentUserEmail,
   onEdit,
   onDelete,
   onApprove,
@@ -46,6 +50,17 @@ export function SliderRowActionMenu({
           Reject
         </Button>
       </div>
+    )
+  }
+
+  if (!isAppSliderOwner(slider, currentUserEmail)) {
+    return (
+      <span
+        className="text-xs text-muted-foreground"
+        title="You can only edit or delete sliders you created"
+      >
+        —
+      </span>
     )
   }
 
