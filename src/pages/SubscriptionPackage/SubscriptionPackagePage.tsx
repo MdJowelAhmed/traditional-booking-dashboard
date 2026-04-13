@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import {
   tierSeedToAdminPackages,
@@ -15,6 +16,7 @@ import {
 
 export default function SubscriptionPackagePage() {
   const [packages, setPackages] = useState<AdminSubscriptionPackage[]>(tierSeedToAdminPackages)
+  const [listTab, setListTab] = useState<'host' | 'business'>('host')
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
   const [editing, setEditing] = useState<AdminSubscriptionPackage | null>(null)
@@ -39,8 +41,11 @@ export default function SubscriptionPackagePage() {
       price: payload.price,
       billingLabel: payload.billingLabel,
       mostPopular: payload.mostPopular,
-      featureLabels: payload.featureLabels,
-      features: payload.features,
+      packageType: payload.packageType,
+      propertyFeatureLabels: payload.propertyFeatureLabels,
+      propertyFeatures: payload.propertyFeatures,
+      serviceFeatureLabels: payload.serviceFeatureLabels,
+      serviceFeatures: payload.serviceFeatures,
     }
 
     setPackages((prev) => {
@@ -89,28 +94,68 @@ export default function SubscriptionPackagePage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {packages.map((pkg, index) => (
-          <motion.div
-            key={pkg.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.06 * index }}
-          >
-            <SubscriptionPackageCard
-              pkg={pkg}
-              onEdit={openEdit}
-              onDelete={setDeleteTarget}
-            />
-          </motion.div>
-        ))}
-      </div>
+      <Tabs value={listTab} onValueChange={(v) => setListTab(v as 'host' | 'business')}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="host">Host</TabsTrigger>
+          <TabsTrigger value="business">Business</TabsTrigger>
+        </TabsList>
 
-      {packages.length === 0 && (
-        <p className="text-center text-muted-foreground py-12 border rounded-xl bg-white">
-          No packages yet. Click &quot;Add package&quot; to create one.
-        </p>
-      )}
+        <TabsContent value="host" className="mt-0">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {packages
+              .filter((p) => p.packageType === 'host')
+              .map((pkg, index) => (
+              <motion.div
+                key={pkg.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.06 * index }}
+              >
+                <SubscriptionPackageCard
+                  pkg={pkg}
+                  onEdit={openEdit}
+                  onDelete={setDeleteTarget}
+                />
+              </motion.div>
+            ))}
+          </div>
+          {packages.filter((p) => p.packageType === 'host').length === 0 && (
+            <p className="text-center text-muted-foreground py-12 border rounded-xl bg-white">
+              {packages.length === 0
+                ? 'No packages yet. Click "Add package" to create one.'
+                : 'No host packages yet. Switch to Business or add a host package.'}
+            </p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="business" className="mt-0">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {packages
+              .filter((p) => p.packageType === 'business')
+              .map((pkg, index) => (
+              <motion.div
+                key={pkg.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.06 * index }}
+              >
+                <SubscriptionPackageCard
+                  pkg={pkg}
+                  onEdit={openEdit}
+                  onDelete={setDeleteTarget}
+                />
+              </motion.div>
+            ))}
+          </div>
+          {packages.filter((p) => p.packageType === 'business').length === 0 && (
+            <p className="text-center text-muted-foreground py-12 border rounded-xl bg-white">
+              {packages.length === 0
+                ? 'No packages yet. Click "Add package" to create one.'
+                : 'No business packages yet. Switch to Host or add a business package.'}
+            </p>
+          )}
+        </TabsContent>
+      </Tabs>
 
       <AddEditPackageModal
         open={modalOpen}
@@ -121,6 +166,7 @@ export default function SubscriptionPackagePage() {
         mode={modalMode}
         pkg={editing}
         onSave={handleSave}
+        defaultTypeForCreate={listTab}
       />
 
       <ConfirmDialog

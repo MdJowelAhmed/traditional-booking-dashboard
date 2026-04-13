@@ -7,8 +7,13 @@ export interface AdminSubscriptionPackage {
   price: number
   billingLabel: string
   mostPopular: boolean
-  featureLabels: [string, string, string]
-  features: [boolean, boolean, boolean]
+  packageType: 'host' | 'business'
+  /** Host-facing (Property) feature list */
+  propertyFeatureLabels: [string, string, string]
+  propertyFeatures: [boolean, boolean, boolean]
+  /** Business-facing (Service) feature list */
+  serviceFeatureLabels: [string, string, string]
+  serviceFeatures: [boolean, boolean, boolean]
 }
 
 export function tierSeedToAdminPackages(): AdminSubscriptionPackage[] {
@@ -18,11 +23,19 @@ export function tierSeedToAdminPackages(): AdminSubscriptionPackage[] {
     price: t.price,
     billingLabel: t.billingLabel,
     mostPopular: !!t.mostPopular,
-    featureLabels: [t.featureLabels[0], t.featureLabels[1], t.featureLabels[2]] as [
+    packageType: 'host',
+    propertyFeatureLabels: [t.featureLabels[0], t.featureLabels[1], t.featureLabels[2]] as [
       string,
       string,
       string,
     ],
-    features: [t.features[0], t.features[1], t.features[2]] as [boolean, boolean, boolean],
+    propertyFeatures: [t.features[0], t.features[1], t.features[2]] as [boolean, boolean, boolean],
+    // Seed service features with same defaults until API wiring exists.
+    serviceFeatureLabels: [t.featureLabels[0], t.featureLabels[1], t.featureLabels[2]] as [
+      string,
+      string,
+      string,
+    ],
+    serviceFeatures: [t.features[0], t.features[1], t.features[2]] as [boolean, boolean, boolean],
   }))
 }
