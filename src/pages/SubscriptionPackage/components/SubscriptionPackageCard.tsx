@@ -30,14 +30,14 @@ export function SubscriptionPackageCard({
         <span className="rounded-full bg-[#6BBF2D] px-3 py-1 text-xs font-semibold text-white">
           {pkg.name}
         </span>
-        <span
+        {/* <span
           className={cn(
             'rounded-full px-3 py-1 text-xs font-semibold',
             isHostPkg ? 'bg-[#E7F6D5] text-[#2E6A0D]' : 'bg-[#E0F2FE] text-[#075985]'
           )}
         >
           {isHostPkg ? 'Host' : 'Business'}
-        </span>
+        </span> */}
         {pkg.mostPopular && (
           <span className="text-xs font-semibold text-[#0C5822]">(Most Popular)</span>
         )}

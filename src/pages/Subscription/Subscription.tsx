@@ -6,15 +6,19 @@ import { CardContent } from '@/components/ui/card'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useUrlNumber } from '@/hooks/useUrlState'
+import { useAppSelector } from '@/redux/hooks'
+import { UserRole } from '@/types/roles'
 import {
   mockSubscriptions,
   tierToDisplayName,
+  defaultEndsAtFromPurchase,
   type PackageTier,
   type SubscriptionRow,
+  type SubscriptionAccountType,
 } from './subscriptionData'
 import { SubscriptionTable } from './components/SubscriptionTable'
 import { BuyPackageModal } from './components/BuyPackageModal'
-import { EditSubscriptionModal } from './components/EditSubscriptionModal'
+import { toast } from '@/utils/toast'
 
 function nextDisplaySerial(rows: SubscriptionRow[]): string {
   const nums = rows
@@ -24,24 +28,61 @@ function nextDisplaySerial(rows: SubscriptionRow[]): string {
   return `#${next}`
 }
 
+function roleToAccountType(role: string): SubscriptionAccountType {
+  if (role === UserRole.BUSINESS) return 'business'
+  return 'host'
+}
+
+function displayNameFromUser(user: {
+  firstName?: string
+  lastName?: string
+  email?: string
+}): string {
+  const a = user.firstName?.trim() ?? ''
+  const b = user.lastName?.trim() ?? ''
+  if (a || b) return `${a} ${b}`.trim()
+  return user.email?.split('@')[0] ?? 'User'
+}
+
 export default function Subscription() {
+  const { user } = useAppSelector((s) => s.auth)
+  const role = user?.role ?? ''
+  const isSuperAdmin = role === UserRole.SUPER_ADMIN
+  const isSubscriber = role === UserRole.HOST || role === UserRole.BUSINESS
+
   const [page, setPage] = useUrlNumber('page', 1)
   const [limit, setLimit] = useUrlNumber('limit', 10)
 
   const [rows, setRows] = useState<SubscriptionRow[]>(mockSubscriptions)
   const [buyOpen, setBuyOpen] = useState(false)
-  const [editing, setEditing] = useState<SubscriptionRow | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<SubscriptionRow | null>(null)
+  const [cancelTarget, setCancelTarget] = useState<SubscriptionRow | null>(null)
 
-  const totalItems = rows.length
+  const subscriberRows = useMemo(() => {
+    if (!isSubscriber || !user?.email) return []
+    const acct = roleToAccountType(role)
+    return rows.filter(
+      (r) =>
+        r.userEmail.toLowerCase() === user.email!.toLowerCase() && r.accountType === acct
+    )
+  }, [rows, isSubscriber, user?.email, role])
+
+  const tableRows = isSuperAdmin ? rows : subscriberRows
+
+  const totalItems = tableRows.length
   const totalPages = Math.max(1, Math.ceil(totalItems / limit))
 
   const pageItems = useMemo(() => {
     const start = (page - 1) * limit
-    return rows.slice(start, start + limit)
-  }, [rows, page, limit])
+    return tableRows.slice(start, start + limit)
+  }, [tableRows, page, limit])
 
   const handleSelectPackage = (tier: PackageTier) => {
+    if (!user?.email) {
+      toast({ variant: 'destructive', title: 'You must be signed in to subscribe' })
+      return
+    }
+    const purchasedAt = new Date().toISOString()
+    const endsAt = defaultEndsAtFromPurchase(purchasedAt)
     setRows((prev) => {
       const displaySerial = nextDisplaySerial(prev)
       return [
@@ -49,44 +90,31 @@ export default function Subscription() {
           id: crypto.randomUUID(),
           displaySerial,
           packageName: tierToDisplayName(tier),
-          purchasedAt: new Date().toISOString(),
+          purchasedAt,
+          endsAt,
           price: tier.price,
           currency: 'USD',
           status: 'active',
+          userName: displayNameFromUser(user),
+          userEmail: user.email.trim(),
+          accountType: roleToAccountType(role),
         },
         ...prev,
       ]
     })
+    setBuyOpen(false)
+    toast({ variant: 'success', title: 'Package purchased' })
   }
 
-  const handleSaveEdit = (
-    id: string,
-    data: {
-      packageName: string
-      purchasedAt: string
-      price: number
-      status: SubscriptionRow['status']
-    }
-  ) => {
+  const confirmCancelSubscription = () => {
+    if (!cancelTarget) return
     setRows((prev) =>
       prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              packageName: data.packageName,
-              purchasedAt: data.purchasedAt,
-              price: data.price,
-              status: data.status,
-            }
-          : r
+        r.id === cancelTarget.id ? { ...r, status: 'expired' as const } : r
       )
     )
-  }
-
-  const confirmDelete = () => {
-    if (!deleteTarget) return
-    setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id))
-    setDeleteTarget(null)
+    toast({ variant: 'success', title: 'Subscription cancelled' })
+    setCancelTarget(null)
   }
 
   return (
@@ -103,25 +131,36 @@ export default function Subscription() {
               Subscription
             </h1>
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              Manage your subscription plan and payment methods
+              {isSuperAdmin
+                ? 'Review and update all subscriber records'
+                : 'Manage your subscription plan and payment methods'}
             </p>
           </div>
-          <Button
-            type="button"
-            onClick={() => setBuyOpen(true)}
-            className="shrink-0 gap-2 rounded-md bg-primary text-white hover:bg-[#5aad26]"
-          >
-            <Plus className="h-5 w-5" />
-            Buy New Package
-          </Button>
+          {isSubscriber && (
+            <Button
+              type="button"
+              onClick={() => setBuyOpen(true)}
+              className="shrink-0 gap-2 rounded-md bg-primary text-white hover:bg-[#5aad26]"
+            >
+              <Plus className="h-5 w-5" />
+              Buy New Package
+            </Button>
+          )}
         </div>
 
         <CardContent className="p-0">
-          <SubscriptionTable
-            rows={pageItems}
-            onEdit={setEditing}
-            onDelete={setDeleteTarget}
-          />
+          {isSuperAdmin ? (
+            <SubscriptionTable
+              mode="admin"
+              rows={pageItems}
+            />
+          ) : (
+            <SubscriptionTable
+              mode="subscriber"
+              rows={pageItems}
+              onCancel={setCancelTarget}
+            />
+          )}
           <div className="border-t border-gray-100 px-6 py-4">
             <Pagination
               currentPage={Math.min(page, totalPages)}
@@ -138,30 +177,25 @@ export default function Subscription() {
         </CardContent>
       </div>
 
-      <BuyPackageModal
-        open={buyOpen}
-        onClose={() => setBuyOpen(false)}
-        onSelectPackage={handleSelectPackage}
-      />
-
-      <EditSubscriptionModal
-        open={!!editing}
-        onClose={() => setEditing(null)}
-        subscription={editing}
-        onSave={handleSaveEdit}
-      />
+      {isSubscriber && (
+        <BuyPackageModal
+          open={buyOpen}
+          onClose={() => setBuyOpen(false)}
+          onSelectPackage={handleSelectPackage}
+        />
+      )}
 
       <ConfirmDialog
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={confirmDelete}
-        title="Delete subscription"
+        open={!!cancelTarget}
+        onClose={() => setCancelTarget(null)}
+        onConfirm={confirmCancelSubscription}
+        title="Cancel subscription?"
         description={
-          deleteTarget
-            ? `Remove “${deleteTarget.packageName}” from your subscriptions? This cannot be undone.`
+          cancelTarget
+            ? `Cancel “${cancelTarget.packageName}”? Your access will end after the current period (shown as expired in this demo).`
             : ''
         }
-        confirmText="Delete"
+        confirmText="Cancel subscription"
       />
     </motion.div>
   )

@@ -101,7 +101,7 @@ const navItems: NavItem[] = [
     title: 'Subscription',
     href: '/subscription',
     icon: Crown,
-    allowedRoles: [UserRole.SUPER_ADMIN],
+    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
   },
   {
     title: 'Support',

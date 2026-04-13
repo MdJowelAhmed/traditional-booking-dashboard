@@ -1,39 +1,25 @@
-import { Edit, Trash2 } from 'lucide-react'
+import { XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { SubscriptionRow } from '../subscriptionData'
 
 interface SubscriptionRowActionsProps {
   row: SubscriptionRow
-  onEdit: (row: SubscriptionRow) => void
-  onDelete: (row: SubscriptionRow) => void
+  onCancel: (row: SubscriptionRow) => void
 }
 
-export function SubscriptionRowActions({
-  row,
-  onEdit,
-  onDelete,
-}: SubscriptionRowActionsProps) {
+/** Host / Business: cancel subscription only (no edit). */
+export function SubscriptionRowActions({ row, onCancel }: SubscriptionRowActionsProps) {
   return (
     <div className="flex items-center justify-end gap-2">
       <Button
         type="button"
         variant="outline"
         size="sm"
-        className="text-[#0C5822] border-none"
-        onClick={() => onEdit(row)}
-      >
-        <Edit className="h-4 w-4 mr-1.5" />
-        Edit
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
         className="border-none text-destructive hover:bg-destructive/10"
-        onClick={() => onDelete(row)}
+        onClick={() => onCancel(row)}
       >
-        <Trash2 className="h-4 w-4 mr-1.5" />
-        Delete
+        <XCircle className="h-4 w-4 mr-1.5" />
+        Cancel
       </Button>
     </div>
   )
