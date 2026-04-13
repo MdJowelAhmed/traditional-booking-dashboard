@@ -5,28 +5,43 @@ import type { AppSliderItem } from '../sliderData'
 import { SliderRowActionMenu } from './SliderRowActionMenu'
 
 function SliderStatusPill({ status }: { status: AppSliderItem['status'] }) {
-  const isOngoing = status === 'ongoing'
+  const style =
+    status === 'ongoing'
+      ? 'bg-[#E7F6D5] border-[#6BBF2D] text-[#2E6A0D]'
+      : status === 'pending'
+        ? 'bg-orange-50 border-orange-300 text-orange-800'
+        : 'bg-red-50 border-red-200 text-red-800'
+  const label =
+    status === 'ongoing' ? 'Ongoing' : status === 'pending' ? 'Pending' : 'Rejected'
   return (
     <span
       className={cn(
         'inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-medium',
-        isOngoing
-          ? 'bg-[#E7F6D5] border-[#6BBF2D] text-[#2E6A0D]'
-          : 'bg-orange-50 border-orange-300 text-orange-800'
+        style
       )}
     >
-      {isOngoing ? 'Ongoing' : 'Pending'}
+      {label}
     </span>
   )
 }
 
 interface AppSliderTableProps {
   sliders: AppSliderItem[]
+  isSuperAdmin: boolean
   onEdit: (slider: AppSliderItem) => void
   onDelete: (slider: AppSliderItem) => void
+  onApprove: (slider: AppSliderItem) => void
+  onReject: (slider: AppSliderItem) => void
 }
 
-export function AppSliderTable({ sliders, onEdit, onDelete }: AppSliderTableProps) {
+export function AppSliderTable({
+  sliders,
+  isSuperAdmin,
+  onEdit,
+  onDelete,
+  onApprove,
+  onReject,
+}: AppSliderTableProps) {
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[960px]">
@@ -45,7 +60,9 @@ export function AppSliderTable({ sliders, onEdit, onDelete }: AppSliderTableProp
           {sliders.length === 0 ? (
             <tr>
               <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                No sliders yet. Create your first banner.
+                {isSuperAdmin
+                  ? 'No slider requests yet. Hosts and businesses submit banners for approval here.'
+                  : 'No sliders yet. Create your first banner.'}
               </td>
             </tr>
           ) : (
@@ -89,8 +106,11 @@ export function AppSliderTable({ sliders, onEdit, onDelete }: AppSliderTableProp
                   <div className="flex justify-end">
                     <SliderRowActionMenu
                       slider={slider}
+                      isSuperAdmin={isSuperAdmin}
                       onEdit={onEdit}
                       onDelete={onDelete}
+                      onApprove={onApprove}
+                      onReject={onReject}
                     />
                   </div>
                 </td>

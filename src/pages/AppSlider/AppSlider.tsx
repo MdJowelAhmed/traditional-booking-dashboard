@@ -6,9 +6,12 @@ import { CardContent } from '@/components/ui/card'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useUrlNumber } from '@/hooks/useUrlState'
+import { useAppSelector } from '@/redux/hooks'
+import { UserRole } from '@/types/roles'
 import { mockAppSliders, type AppSliderItem } from './sliderData'
 import { CreateEditSliderModal } from './components/CreateEditSliderModal'
 import { AppSliderTable } from './components/AppSliderTable'
+import { toast } from '@/utils/toast'
 
 function nextDisplaySerial(sliders: AppSliderItem[]): string {
   const nums = sliders
@@ -19,6 +22,10 @@ function nextDisplaySerial(sliders: AppSliderItem[]): string {
 }
 
 export default function AppSlider() {
+  const { user } = useAppSelector((state) => state.auth)
+  const role = user?.role ?? ''
+  const isSuperAdmin = role === UserRole.SUPER_ADMIN
+
   const [page, setPage] = useUrlNumber('page', 1)
   const [limit, setLimit] = useUrlNumber('limit', 10)
 
@@ -27,6 +34,7 @@ export default function AppSlider() {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
   const [editingSlider, setEditingSlider] = useState<AppSliderItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<AppSliderItem | null>(null)
+  const [rejectTarget, setRejectTarget] = useState<AppSliderItem | null>(null)
 
   const totalItems = sliders.length
   const totalPages = Math.max(1, Math.ceil(totalItems / limit))
@@ -37,12 +45,14 @@ export default function AppSlider() {
   }, [sliders, page, limit])
 
   const openCreate = () => {
+    if (isSuperAdmin) return
     setModalMode('create')
     setEditingSlider(null)
     setCreateEditOpen(true)
   }
 
   const openEdit = (slider: AppSliderItem) => {
+    if (isSuperAdmin) return
     setModalMode('edit')
     setEditingSlider(slider)
     setCreateEditOpen(true)
@@ -65,7 +75,7 @@ export default function AppSlider() {
             createdAt: new Date().toISOString(),
             name: payload.name,
             buttonLabel: payload.buttonLabel,
-            status: payload.status,
+            status: 'pending',
           },
           ...prev,
         ]
@@ -79,11 +89,30 @@ export default function AppSlider() {
               imageUrl: payload.imageUrl,
               name: payload.name,
               buttonLabel: payload.buttonLabel,
+              status: editingSlider.status === 'rejected' ? 'pending' : editingSlider.status,
             }
             : s
         )
       )
     }
+  }
+
+  const handleApprove = (slider: AppSliderItem) => {
+    setSliders((prev) =>
+      prev.map((s) => (s.id === slider.id ? { ...s, status: 'ongoing' as const } : s))
+    )
+    toast({ variant: 'success', title: 'Slider approved', description: 'It will show as ongoing in the app.' })
+  }
+
+  const confirmReject = () => {
+    if (!rejectTarget) return
+    setSliders((prev) =>
+      prev.map((s) =>
+        s.id === rejectTarget.id ? { ...s, status: 'rejected' as const } : s
+      )
+    )
+    toast({ variant: 'success', title: 'Slider rejected' })
+    setRejectTarget(null)
   }
 
   const confirmDelete = () => {
@@ -108,25 +137,32 @@ export default function AppSlider() {
               App Slider
             </h1>
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              Manage home banners and promotional slides shown in the guest app
+              {isSuperAdmin
+                ? 'Review slider requests from hosts and businesses. Approve to publish or reject.'
+                : 'Manage home banners and promotional slides shown in the guest app. New sliders stay pending until a super admin approves them.'}
             </p>
           </div>
 
-          <Button
-          type="button"
-          onClick={openCreate}
-          className="rounded-md bg-primary hover:bg-[#5aad26] text-white shrink-0 gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Create New Slider
-        </Button>
+          {!isSuperAdmin && (
+            <Button
+              type="button"
+              onClick={openCreate}
+              className="rounded-md bg-primary hover:bg-[#5aad26] text-white shrink-0 gap-2"
+            >
+              <Plus className="h-5 w-5" />
+              Create New Slider
+            </Button>
+          )}
         </div>
        
         <CardContent className="p-0">
           <AppSliderTable
             sliders={pageItems}
+            isSuperAdmin={isSuperAdmin}
             onEdit={openEdit}
             onDelete={setDeleteTarget}
+            onApprove={handleApprove}
+            onReject={setRejectTarget}
           />
           <div className="px-6 py-4 border-t border-gray-100">
             <Pagination
@@ -145,7 +181,7 @@ export default function AppSlider() {
       </div>
 
       <CreateEditSliderModal
-        open={createEditOpen}
+        open={createEditOpen && !isSuperAdmin}
         onClose={() => {
           setCreateEditOpen(false)
           setEditingSlider(null)
@@ -166,6 +202,19 @@ export default function AppSlider() {
             : ''
         }
         confirmText="Delete"
+      />
+
+      <ConfirmDialog
+        open={!!rejectTarget}
+        onClose={() => setRejectTarget(null)}
+        onConfirm={confirmReject}
+        title="Reject slider"
+        description={
+          rejectTarget
+            ? `Reject “${rejectTarget.name}”? The owner can edit and resubmit for approval.`
+            : ''
+        }
+        confirmText="Reject"
       />
     </motion.div>
   )

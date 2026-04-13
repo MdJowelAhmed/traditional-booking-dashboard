@@ -8,8 +8,6 @@ import {
   FileText,
   Shield,
   Info,
-  CreditCard,
-
   ListOrdered,
  
   Star,
@@ -53,14 +51,14 @@ const navItems: NavItem[] = [
     title: 'My Listing',
     href: '/my-listing',
     icon: ListChecksIcon,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS],
   },
   
   {
     title: 'Booking Management',
     href: '/booking-management',
     icon: ListOrdered,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS],
   },
 
   // {
@@ -69,12 +67,12 @@ const navItems: NavItem[] = [
   //   icon: Calendar,
   //   allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
   // },
-  {
-    title: 'Transactions History',
-    href: '/transactions-history',
-    icon: CreditCard,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.BUSINESS], // Super Admin only
-  },
+  // {
+  //   title: 'Transactions History',
+  //   href: '/transactions-history',
+  //   icon: CreditCard,
+  //   allowedRoles: [UserRole.SUPER_ADMIN], // Super Admin only
+  // },
   {
     title: 'Controller',
     href: '/controller',
@@ -85,7 +83,7 @@ const navItems: NavItem[] = [
     title: 'Reviews & Ratings',
     href: '/reviews-ratings',
     icon: Star,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS],
   },
   {
     title: 'App Slider',
@@ -103,13 +101,13 @@ const navItems: NavItem[] = [
     title: 'Subscription',
     href: '/subscription',
     icon: Crown,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN],
   },
   {
     title: 'Support',
     href: '/support',
     icon: LifeBuoy,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN, ],
   },
 
 ]

@@ -1,4 +1,4 @@
-export type AppSliderStatus = 'ongoing' | 'pending'
+export type AppSliderStatus = 'ongoing' | 'pending' | 'rejected'
 
 export interface AppSliderItem {
   id: string
@@ -29,5 +29,14 @@ export const mockAppSliders: AppSliderItem[] = [
     name: 'Summer Stay',
     buttonLabel: 'Book Today',
     status: 'pending',
+  },
+  {
+    id: '3',
+    displaySerial: '#1003',
+    imageUrl: 'https://picsum.photos/seed/slider3/320/120',
+    createdAt: '2026-04-08T09:00:00.000Z',
+    name: 'Weekend Deal',
+    buttonLabel: 'See offer',
+    status: 'rejected',
   },
 ]
