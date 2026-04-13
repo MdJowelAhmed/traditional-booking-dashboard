@@ -73,6 +73,7 @@ export default function AppSlider() {
             displaySerial,
             imageUrl: payload.imageUrl,
             createdAt: new Date().toISOString(),
+            userEmail: user?.email?.trim() ?? '',
             name: payload.name,
             buttonLabel: payload.buttonLabel,
             status: 'pending',

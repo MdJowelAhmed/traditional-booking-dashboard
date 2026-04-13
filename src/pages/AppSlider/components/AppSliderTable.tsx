@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
 import { cn } from '@/utils/cn'
-import { formatDate } from '@/utils/formatters'
 import type { AppSliderItem } from '../sliderData'
 import { SliderRowActionMenu } from './SliderRowActionMenu'
 
@@ -49,7 +48,7 @@ export function AppSliderTable({
           <tr className="bg-primary text-white">
             <th className="px-6 py-4 text-left text-sm font-bold">S.No</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Image</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Date</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">User email</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Name</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Button</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
@@ -88,9 +87,12 @@ export function AppSliderTable({
                     />
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-slate-700">
-                    {formatDate(slider.createdAt, 'd MMMM, yyyy')}
+                <td className="px-6 py-4 max-w-[220px]">
+                  <span
+                    className="text-sm text-slate-700 break-all"
+                    title={slider.userEmail}
+                  >
+                    {slider.userEmail || '—'}
                   </span>
                 </td>
                 <td className="px-6 py-4">
