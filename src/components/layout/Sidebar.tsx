@@ -89,7 +89,7 @@ const navItems: NavItem[] = [
     title: 'App Slider',
     href: '/app-slider',
     icon: ImageIcon,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.SUPER_ADMIN, ],
   },
   {
     title: 'Subscription Package',
@@ -107,7 +107,7 @@ const navItems: NavItem[] = [
     title: 'Support',
     href: '/support',
     icon: LifeBuoy,
-    allowedRoles: [UserRole.SUPER_ADMIN, ],
+    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS ],
   },
 
 ]
