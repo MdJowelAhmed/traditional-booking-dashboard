@@ -2,8 +2,9 @@ import { useState, useMemo } from 'react'
 import { formatCurrency, formatCompactNumber } from '@/utils/formatters'
 import { StatCard } from './StatCard'
 import { EarningsSummaryChart } from './EarningsSummaryChart'
+import { SuperAdminPlatformChart } from './SuperAdminPlatformChart'
 import { RecentBookingsCard } from './RecentBookingsCard'
-import { yearlyData, defaultChartYear } from './dashboardData'
+import { yearlyData, superAdminPlatformYearlyData, defaultChartYear } from './dashboardData'
 import { Calendar, CreditCard, ListOrdered, Settings, CircleDollarSign } from 'lucide-react'
 import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
@@ -11,10 +12,15 @@ import { UserRole } from '@/types/roles'
 export default function Dashboard() {
   const { user } = useAppSelector((state) => state.auth)
   const isHost = user?.role === UserRole.HOST
+  const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN
 
   const [selectedYear, setSelectedYear] = useState(defaultChartYear)
 
   const chartData = useMemo(() => yearlyData[selectedYear], [selectedYear])
+  const superAdminChartData = useMemo(
+    () => superAdminPlatformYearlyData[selectedYear] ?? superAdminPlatformYearlyData[defaultChartYear],
+    [selectedYear]
+  )
 
   const stats = useMemo(() => {
     const shared = isHost
@@ -94,19 +100,30 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Chart Section - Two Column Layout */}
+      {/* Chart: full width for super admin (platform metrics); host/business keep sales + bookings */}
       <div className="grid gap-6 lg:grid-cols-12">
-       <div className='col-span-8'>
-         <EarningsSummaryChart
-          chartData={chartData}
-          selectedYear={selectedYear}
-          onYearChange={setSelectedYear} 
-          
-        />
-       </div>
-       <div className='col-span-4'>
-        <RecentBookingsCard />
-       </div>
+        {isSuperAdmin ? (
+          <div className="col-span-12">
+            <SuperAdminPlatformChart
+              chartData={superAdminChartData}
+              selectedYear={selectedYear}
+              onYearChange={setSelectedYear}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="col-span-12 lg:col-span-8">
+              <EarningsSummaryChart
+                chartData={chartData}
+                selectedYear={selectedYear}
+                onYearChange={setSelectedYear}
+              />
+            </div>
+            <div className="col-span-12 lg:col-span-4">
+              <RecentBookingsCard />
+            </div>
+          </>
+        )}
       </div>
 
       {/* <div>

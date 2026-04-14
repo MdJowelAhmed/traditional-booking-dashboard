@@ -45,6 +45,90 @@ export const yearlyData: Record<string, ChartDataPoint[]> = Object.fromEntries(
 
 export const years = Object.keys(salesRevenueByYear).sort((a, b) => Number(b) - Number(a))
 
+/** Super admin dashboard: monthly counts by account type (no sales). */
+export type SuperAdminPlatformChartPoint = {
+    month: string
+    users: number
+    hosts: number
+    businesses: number
+}
+
+const superAdminUsersByPastYear: Record<string, readonly number[]> = {
+    '2025': [820, 880, 910, 940, 980, 1020, 1050, 1080, 1120, 1150, 1180, 1210],
+    '2024': [520, 560, 590, 620, 650, 690, 720, 760, 790, 820, 800, 820],
+    '2023': [320, 350, 380, 400, 430, 460, 490, 510, 530, 550, 570, 520],
+    '2022': [180, 200, 220, 240, 260, 280, 300, 310, 320, 330, 340, 320],
+    '2021': [90, 100, 110, 120, 130, 140, 145, 150, 155, 160, 165, 170],
+}
+
+const superAdminHostsByPastYear: Record<string, readonly number[]> = {
+    '2025': [120, 128, 132, 136, 140, 145, 148, 152, 156, 160, 164, 168],
+    '2024': [78, 82, 85, 88, 92, 95, 98, 102, 105, 108, 110, 112],
+    '2023': [48, 52, 54, 56, 58, 62, 64, 66, 68, 70, 72, 74],
+    '2022': [28, 30, 32, 34, 36, 38, 39, 40, 41, 42, 43, 44],
+    '2021': [12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+}
+
+const superAdminBusinessesByPastYear: Record<string, readonly number[]> = {
+    '2025': [210, 218, 225, 232, 240, 248, 255, 262, 270, 278, 285, 292],
+    '2024': [140, 146, 152, 158, 164, 170, 176, 182, 188, 194, 198, 202],
+    '2023': [85, 90, 94, 98, 102, 106, 110, 114, 118, 122, 126, 130],
+    '2022': [48, 52, 55, 58, 61, 64, 66, 68, 70, 72, 74, 76],
+    '2021': [22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44],
+}
+
+const superAdminUsersPresentYear: readonly number[] = [
+    1240, 1285, 1610, 1340, 1875, 1405, 1630, 1460, 1990, 1520, 1745, 1570,
+]
+
+const superAdminHostsPresentYear: readonly number[] = [
+    172, 336, 210, 554, 178, 832, 196, 1000, 204, 208, 212, 216,
+]
+
+const superAdminBusinessesPresentYear: readonly number[] = [
+    298, 605, 312, 620, 328, 635, 342, 650, 358, 665, 372, 680,
+]
+
+function buildSuperAdminYearRows(
+    users: readonly number[],
+    hosts: readonly number[],
+    businesses: readonly number[]
+): SuperAdminPlatformChartPoint[] {
+    return MONTHS.map((month, i) => ({
+        month,
+        users: users[i] ?? 0,
+        hosts: hosts[i] ?? 0,
+        businesses: businesses[i] ?? 0,
+    }))
+}
+
+const superAdminUsersByYear: Record<string, readonly number[]> = {
+    ...superAdminUsersByPastYear,
+    [PRESENT_YEAR]: superAdminUsersPresentYear,
+}
+
+const superAdminHostsByYear: Record<string, readonly number[]> = {
+    ...superAdminHostsByPastYear,
+    [PRESENT_YEAR]: superAdminHostsPresentYear,
+}
+
+const superAdminBusinessesByYear: Record<string, readonly number[]> = {
+    ...superAdminBusinessesByPastYear,
+    [PRESENT_YEAR]: superAdminBusinessesPresentYear,
+}
+
+export const superAdminPlatformYearlyData: Record<string, SuperAdminPlatformChartPoint[]> =
+    Object.fromEntries(
+        years.map((year) => [
+            year,
+            buildSuperAdminYearRows(
+                superAdminUsersByYear[year] ?? superAdminUsersPresentYear,
+                superAdminHostsByYear[year] ?? superAdminHostsPresentYear,
+                superAdminBusinessesByYear[year] ?? superAdminBusinessesPresentYear
+            ),
+        ])
+    ) as Record<string, SuperAdminPlatformChartPoint[]>
+
 export type RecentBookingItem = {
     id: string
     customerName: string
