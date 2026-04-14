@@ -1,31 +1,48 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ModalWrapper, FormInput, ImageUploader } from '@/components/common'
+import { ModalWrapper, FormInput, FormSelect, ImageUploader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { formatFileSize } from '@/utils/formatters'
 import { MAX_IMAGE_SIZE } from '@/utils/constants'
 import { toast } from '@/utils/toast'
-import type { AppSliderItem } from '../sliderData'
+import type { AppSliderItem, AppSliderStatus, AppSliderTargetType } from '../sliderData'
 
-const sliderFormSchema = z.object({
+const baseSchema = z.object({
   name: z.string().min(1, 'Banner name is required'),
   buttonLabel: z.string().min(1, 'Button name is required'),
 })
 
-type SliderFormData = z.infer<typeof sliderFormSchema>
+const superAdminSchema = baseSchema.extend({
+  targetType: z.enum(['host', 'business'], {
+    required_error: 'Select who this banner is for',
+  }),
+  status: z.enum(['ongoing', 'pending', 'rejected']),
+})
+
+type SliderFormValues = {
+  name: string
+  buttonLabel: string
+  targetType?: AppSliderTargetType
+  status?: AppSliderStatus
+}
 
 interface CreateEditSliderModalProps {
   open: boolean
   onClose: () => void
   mode: 'create' | 'edit'
   slider?: AppSliderItem | null
+  /** Super admin can set audience (host vs business) and status. */
+  isSuperAdmin: boolean
+  /** For host/business users: audience matches their role (not shown in form). */
+  defaultTargetType: AppSliderTargetType
   onSave: (payload: {
     name: string
     buttonLabel: string
     imageUrl: string
-    status: AppSliderItem['status']
+    status: AppSliderStatus
+    targetType: AppSliderTargetType
   }) => void
 }
 
@@ -34,24 +51,38 @@ export function CreateEditSliderModal({
   onClose,
   mode,
   slider,
+  isSuperAdmin,
+  defaultTargetType,
   onSave,
 }: CreateEditSliderModalProps) {
   const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [existingUrl, setExistingUrl] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const schema = useMemo(
+    () => (isSuperAdmin ? superAdminSchema : baseSchema),
+    [isSuperAdmin]
+  )
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
-  } = useForm<SliderFormData>({
-    resolver: zodResolver(sliderFormSchema),
+  } = useForm<SliderFormValues>({
+    resolver: zodResolver(schema),
     defaultValues: {
       name: '',
       buttonLabel: '',
+      targetType: 'host',
+      status: 'ongoing',
     },
   })
+
+  const targetTypeValue = watch('targetType')
+  const statusValue = watch('status')
 
   useEffect(() => {
     if (!open) return
@@ -59,20 +90,27 @@ export function CreateEditSliderModal({
       reset({
         name: slider.name,
         buttonLabel: slider.buttonLabel,
+        targetType: slider.targetType,
+        status: slider.status,
       })
       setBannerFile(null)
       setExistingUrl(slider.imageUrl)
     } else {
-      reset({ name: '', buttonLabel: '' })
+      reset({
+        name: '',
+        buttonLabel: '',
+        targetType: isSuperAdmin ? 'host' : defaultTargetType,
+        status: isSuperAdmin ? 'ongoing' : 'pending',
+      })
       setBannerFile(null)
       setExistingUrl(null)
     }
-  }, [open, mode, slider, reset])
+  }, [open, mode, slider, reset, isSuperAdmin, defaultTargetType])
 
   const imageValue: string | File | null =
     bannerFile ?? (existingUrl && !bannerFile ? existingUrl : null)
 
-  const onSubmit = async (data: SliderFormData) => {
+  const onSubmit = async (data: SliderFormValues) => {
     const hasImage = bannerFile !== null || (mode === 'edit' && existingUrl)
     if (!hasImage) {
       toast({
@@ -88,11 +126,27 @@ export function CreateEditSliderModal({
       if (bannerFile) {
         imageUrl = URL.createObjectURL(bannerFile)
       }
+
+      const targetType: AppSliderTargetType = isSuperAdmin
+        ? data.targetType!
+        : defaultTargetType
+
+      let status: AppSliderStatus
+      if (isSuperAdmin) {
+        status = data.status!
+      } else if (mode === 'create') {
+        status = 'pending'
+      } else {
+        status =
+          slider?.status === 'rejected' ? 'pending' : slider?.status ?? 'ongoing'
+      }
+
       onSave({
         name: data.name.trim(),
         buttonLabel: data.buttonLabel.trim(),
         imageUrl,
-        status: mode === 'create' ? 'pending' : slider?.status ?? 'ongoing',
+        status,
+        targetType,
       })
       toast({
         variant: 'success',
@@ -150,8 +204,41 @@ export function CreateEditSliderModal({
           error={errors.buttonLabel?.message}
         />
 
+        {isSuperAdmin && (
+          <>
+            <FormSelect
+              label="Banner for"
+              required
+              value={targetTypeValue ?? 'host'}
+              onChange={(v) =>
+                setValue('targetType', v as AppSliderTargetType, { shouldValidate: true })
+              }
+              options={[
+                { value: 'host', label: 'Host' },
+                { value: 'business', label: 'Business' },
+              ]}
+              error={errors.targetType?.message}
+              name="targetType"
+            />
+            <FormSelect
+              label="Status"
+              required
+              value={statusValue ?? 'ongoing'}
+              onChange={(v) =>
+                setValue('status', v as AppSliderStatus, { shouldValidate: true })
+              }
+              options={[
+                { value: 'ongoing', label: 'Ongoing' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'rejected', label: 'Rejected' },
+              ]}
+              error={errors.status?.message}
+              name="status"
+            />
+          </>
+        )}
+
         <div className="flex justify-end gap-3 pt-2">
-         
           <Button
             type="submit"
             disabled={isSubmitting}

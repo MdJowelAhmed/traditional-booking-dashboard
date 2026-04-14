@@ -3,6 +3,22 @@ import { cn } from '@/utils/cn'
 import type { AppSliderItem } from '../sliderData'
 import { SliderRowActionMenu } from './SliderRowActionMenu'
 
+function TargetTypePill({ targetType }: { targetType: AppSliderItem['targetType'] }) {
+  const isHost = targetType === 'host'
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-medium',
+        isHost
+          ? 'bg-sky-50 border-sky-200 text-sky-900'
+          : 'bg-violet-50 border-violet-200 text-violet-900'
+      )}
+    >
+      {isHost ? 'Host' : 'Business'}
+    </span>
+  )
+}
+
 function SliderStatusPill({ status }: { status: AppSliderItem['status'] }) {
   const style =
     status === 'ongoing'
@@ -30,8 +46,6 @@ interface AppSliderTableProps {
   currentUserEmail?: string | null
   onEdit: (slider: AppSliderItem) => void
   onDelete: (slider: AppSliderItem) => void
-  onApprove: (slider: AppSliderItem) => void
-  onReject: (slider: AppSliderItem) => void
 }
 
 export function AppSliderTable({
@@ -40,8 +54,6 @@ export function AppSliderTable({
   currentUserEmail,
   onEdit,
   onDelete,
-  onApprove,
-  onReject,
 }: AppSliderTableProps) {
   return (
     <div className="w-full overflow-auto">
@@ -53,6 +65,7 @@ export function AppSliderTable({
             <th className="px-6 py-4 text-left text-sm font-bold">User email</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Name</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Button</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">Type</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
             <th className="px-6 py-4 text-right text-sm font-bold w-[200px]" aria-label="Row actions" />
           </tr>
@@ -60,9 +73,9 @@ export function AppSliderTable({
         <tbody className="divide-y divide-gray-100 bg-white">
           {sliders.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+              <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                 {isSuperAdmin
-                  ? 'No slider requests yet. Hosts and businesses submit banners for approval here.'
+                  ? 'No sliders yet. Create banners for host or business apps.'
                   : 'No sliders yet. Create your first banner.'}
               </td>
             </tr>
@@ -104,6 +117,9 @@ export function AppSliderTable({
                   <span className="text-sm text-slate-700">{slider.buttonLabel}</span>
                 </td>
                 <td className="px-6 py-4">
+                  <TargetTypePill targetType={slider.targetType} />
+                </td>
+                <td className="px-6 py-4">
                   <SliderStatusPill status={slider.status} />
                 </td>
                 <td className="px-6 py-4">
@@ -114,8 +130,6 @@ export function AppSliderTable({
                       currentUserEmail={currentUserEmail}
                       onEdit={onEdit}
                       onDelete={onDelete}
-                      onApprove={onApprove}
-                      onReject={onReject}
                     />
                   </div>
                 </td>
