@@ -90,7 +90,6 @@ export default function AppSlider() {
     name: string
     buttonLabel: string
     imageUrl: string
-    status: AppSliderItem['status']
     targetType: AppSliderTargetType
   }) => {
     if (modalMode === 'create') {
@@ -105,7 +104,6 @@ export default function AppSlider() {
             userEmail: user?.email?.trim() ?? '',
             name: payload.name,
             buttonLabel: payload.buttonLabel,
-            status: payload.status,
             targetType: payload.targetType,
           },
           ...prev,
@@ -128,7 +126,6 @@ export default function AppSlider() {
                 imageUrl: payload.imageUrl,
                 name: payload.name,
                 buttonLabel: payload.buttonLabel,
-                status: payload.status,
                 targetType: payload.targetType,
               }
             : s
@@ -162,8 +159,8 @@ export default function AppSlider() {
             </h1>
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
               {isSuperAdmin
-                ? 'Create, edit, or delete app banners. Choose whether each banner is for the host or business app and set its status.'
-                : 'Create sliders for the guest app; new submissions stay pending until a super admin publishes them. You can edit or delete only the sliders tied to your account email.'}
+                ? 'Create, edit, or delete app banners. Choose whether each banner is for the host or business app.'
+                : 'Create sliders for the guest app. You can edit or delete only the sliders tied to your account email.'}
             </p>
           </div>
 

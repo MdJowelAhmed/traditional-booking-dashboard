@@ -1,5 +1,3 @@
-export type AppSliderStatus = 'ongoing' | 'pending' | 'rejected'
-
 /** Which app audience this banner is for (set by super admin on create/edit). */
 export type AppSliderTargetType = 'host' | 'business'
 
@@ -13,7 +11,6 @@ export interface AppSliderItem {
   userEmail: string
   name: string
   buttonLabel: string
-  status: AppSliderStatus
   targetType: AppSliderTargetType
 }
 
@@ -26,7 +23,6 @@ export const mockAppSliders: AppSliderItem[] = [
     userEmail: 'host@example.com',
     name: 'Discount',
     buttonLabel: 'Explore Now',
-    status: 'ongoing',
     targetType: 'host',
   },
   {
@@ -37,7 +33,6 @@ export const mockAppSliders: AppSliderItem[] = [
     userEmail: 'business.owner@example.com',
     name: 'Summer Stay',
     buttonLabel: 'Book Today',
-    status: 'pending',
     targetType: 'business',
   },
   {
@@ -48,7 +43,6 @@ export const mockAppSliders: AppSliderItem[] = [
     userEmail: 'rentals@example.com',
     name: 'Weekend Deal',
     buttonLabel: 'See offer',
-    status: 'rejected',
     targetType: 'host',
   },
 ]

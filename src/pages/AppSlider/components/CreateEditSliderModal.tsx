@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { formatFileSize } from '@/utils/formatters'
 import { MAX_IMAGE_SIZE } from '@/utils/constants'
 import { toast } from '@/utils/toast'
-import type { AppSliderItem, AppSliderStatus, AppSliderTargetType } from '../sliderData'
+import type { AppSliderItem, AppSliderTargetType } from '../sliderData'
 
 const baseSchema = z.object({
   name: z.string().min(1, 'Banner name is required'),
@@ -18,14 +18,12 @@ const superAdminSchema = baseSchema.extend({
   targetType: z.enum(['host', 'business'], {
     required_error: 'Select who this banner is for',
   }),
-  status: z.enum(['ongoing', 'pending', 'rejected']),
 })
 
 type SliderFormValues = {
   name: string
   buttonLabel: string
   targetType?: AppSliderTargetType
-  status?: AppSliderStatus
 }
 
 interface CreateEditSliderModalProps {
@@ -33,7 +31,7 @@ interface CreateEditSliderModalProps {
   onClose: () => void
   mode: 'create' | 'edit'
   slider?: AppSliderItem | null
-  /** Super admin can set audience (host vs business) and status. */
+  /** Super admin can choose host vs business audience. */
   isSuperAdmin: boolean
   /** For host/business users: audience matches their role (not shown in form). */
   defaultTargetType: AppSliderTargetType
@@ -41,7 +39,6 @@ interface CreateEditSliderModalProps {
     name: string
     buttonLabel: string
     imageUrl: string
-    status: AppSliderStatus
     targetType: AppSliderTargetType
   }) => void
 }
@@ -77,12 +74,10 @@ export function CreateEditSliderModal({
       name: '',
       buttonLabel: '',
       targetType: 'host',
-      status: 'ongoing',
     },
   })
 
   const targetTypeValue = watch('targetType')
-  const statusValue = watch('status')
 
   useEffect(() => {
     if (!open) return
@@ -91,7 +86,6 @@ export function CreateEditSliderModal({
         name: slider.name,
         buttonLabel: slider.buttonLabel,
         targetType: slider.targetType,
-        status: slider.status,
       })
       setBannerFile(null)
       setExistingUrl(slider.imageUrl)
@@ -100,7 +94,6 @@ export function CreateEditSliderModal({
         name: '',
         buttonLabel: '',
         targetType: isSuperAdmin ? 'host' : defaultTargetType,
-        status: isSuperAdmin ? 'ongoing' : 'pending',
       })
       setBannerFile(null)
       setExistingUrl(null)
@@ -131,21 +124,10 @@ export function CreateEditSliderModal({
         ? data.targetType!
         : defaultTargetType
 
-      let status: AppSliderStatus
-      if (isSuperAdmin) {
-        status = data.status!
-      } else if (mode === 'create') {
-        status = 'pending'
-      } else {
-        status =
-          slider?.status === 'rejected' ? 'pending' : slider?.status ?? 'ongoing'
-      }
-
       onSave({
         name: data.name.trim(),
         buttonLabel: data.buttonLabel.trim(),
         imageUrl,
-        status,
         targetType,
       })
       toast({
@@ -205,37 +187,20 @@ export function CreateEditSliderModal({
         />
 
         {isSuperAdmin && (
-          <>
-            <FormSelect
-              label="Banner for"
-              required
-              value={targetTypeValue ?? 'host'}
-              onChange={(v) =>
-                setValue('targetType', v as AppSliderTargetType, { shouldValidate: true })
-              }
-              options={[
-                { value: 'host', label: 'Host' },
-                { value: 'business', label: 'Business' },
-              ]}
-              error={errors.targetType?.message}
-              name="targetType"
-            />
-            <FormSelect
-              label="Status"
-              required
-              value={statusValue ?? 'ongoing'}
-              onChange={(v) =>
-                setValue('status', v as AppSliderStatus, { shouldValidate: true })
-              }
-              options={[
-                { value: 'ongoing', label: 'Ongoing' },
-                { value: 'pending', label: 'Pending' },
-                { value: 'rejected', label: 'Rejected' },
-              ]}
-              error={errors.status?.message}
-              name="status"
-            />
-          </>
+          <FormSelect
+            label="Banner for"
+            required
+            value={targetTypeValue ?? 'host'}
+            onChange={(v) =>
+              setValue('targetType', v as AppSliderTargetType, { shouldValidate: true })
+            }
+            options={[
+              { value: 'host', label: 'Host' },
+              { value: 'business', label: 'Business' },
+            ]}
+            error={errors.targetType?.message}
+            name="targetType"
+          />
         )}
 
         <div className="flex justify-end gap-3 pt-2">

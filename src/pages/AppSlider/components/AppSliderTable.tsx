@@ -19,27 +19,6 @@ function TargetTypePill({ targetType }: { targetType: AppSliderItem['targetType'
   )
 }
 
-function SliderStatusPill({ status }: { status: AppSliderItem['status'] }) {
-  const style =
-    status === 'ongoing'
-      ? 'bg-[#E7F6D5] border-[#6BBF2D] text-[#2E6A0D]'
-      : status === 'pending'
-        ? 'bg-orange-50 border-orange-300 text-orange-800'
-        : 'bg-red-50 border-red-200 text-red-800'
-  const label =
-    status === 'ongoing' ? 'Ongoing' : status === 'pending' ? 'Pending' : 'Rejected'
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-medium',
-        style
-      )}
-    >
-      {label}
-    </span>
-  )
-}
-
 interface AppSliderTableProps {
   sliders: AppSliderItem[]
   isSuperAdmin: boolean
@@ -66,14 +45,13 @@ export function AppSliderTable({
             <th className="px-6 py-4 text-left text-sm font-bold">Name</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Button</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Type</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
             <th className="px-6 py-4 text-right text-sm font-bold w-[200px]" aria-label="Row actions" />
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {sliders.length === 0 ? (
             <tr>
-              <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+              <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                 {isSuperAdmin
                   ? 'No sliders yet. Create banners for host or business apps.'
                   : 'No sliders yet. Create your first banner.'}
@@ -118,9 +96,6 @@ export function AppSliderTable({
                 </td>
                 <td className="px-6 py-4">
                   <TargetTypePill targetType={slider.targetType} />
-                </td>
-                <td className="px-6 py-4">
-                  <SliderStatusPill status={slider.status} />
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex justify-end">
