@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge'
-import { Shield, Building2, Briefcase } from 'lucide-react'
+import { Building2, Briefcase } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { UserRole } from '@/types/roles'
 import { getRoleDisplayName } from '@/utils/roleHelpers'
@@ -11,15 +11,13 @@ interface RoleBadgeProps {
 }
 
 export function RoleBadge({ role, className, showIcon = true }: RoleBadgeProps) {
-  const variant = role === UserRole.SUPER_ADMIN ? 'admin' : role === UserRole.HOST ? 'host' : 'business'
+  const variant = role === UserRole.HOST ? 'host' : 'business'
 
   return (
     <Badge
       variant="outline"
       className={cn(
         'gap-1 font-medium border-0',
-        variant === 'admin' &&
-          'bg-amber-100 text-amber-900 hover:bg-amber-200/90',
         variant === 'host' &&
           'bg-purple-100 text-purple-800 hover:bg-purple-200/90',
         variant === 'business' &&
@@ -28,9 +26,7 @@ export function RoleBadge({ role, className, showIcon = true }: RoleBadgeProps) 
       )}
     >
       {showIcon &&
-        (variant === 'admin' ? (
-          <Shield className="h-3 w-3" />
-        ) : variant === 'host' ? (
+        (variant === 'host' ? (
           <Building2 className="h-3 w-3" />
         ) : (
           <Briefcase className="h-3 w-3" />

@@ -34,7 +34,7 @@ function roleToSliderTargetType(role: string): AppSliderTargetType {
 export default function AppSlider() {
   const { user } = useAppSelector((state) => state.auth)
   const role = user?.role ?? ''
-  const isSuperAdmin = role === UserRole.SUPER_ADMIN
+  const isHostAdmin = role === UserRole.HOST
   const defaultTargetType = roleToSliderTargetType(role)
 
   const [page, setPage] = useUrlNumber('page', 1)
@@ -61,7 +61,7 @@ export default function AppSlider() {
   }
 
   const openEdit = (slider: AppSliderItem) => {
-    if (!isSuperAdmin && !isAppSliderOwner(slider, user?.email)) {
+    if (!isHostAdmin && !isAppSliderOwner(slider, user?.email)) {
       toast({
         variant: 'destructive',
         title: 'Cannot edit this slider',
@@ -75,7 +75,7 @@ export default function AppSlider() {
   }
 
   const requestDelete = (slider: AppSliderItem) => {
-    if (!isSuperAdmin && !isAppSliderOwner(slider, user?.email)) {
+    if (!isHostAdmin && !isAppSliderOwner(slider, user?.email)) {
       toast({
         variant: 'destructive',
         title: 'Cannot delete this slider',
@@ -110,7 +110,7 @@ export default function AppSlider() {
         ]
       })
     } else if (editingSlider) {
-      if (!isSuperAdmin && !isAppSliderOwner(editingSlider, user?.email)) {
+      if (!isHostAdmin && !isAppSliderOwner(editingSlider, user?.email)) {
         toast({
           variant: 'destructive',
           title: 'Cannot save',
@@ -136,7 +136,7 @@ export default function AppSlider() {
 
   const confirmDelete = () => {
     if (!deleteTarget) return
-    if (!isSuperAdmin && !isAppSliderOwner(deleteTarget, user?.email)) {
+    if (!isHostAdmin && !isAppSliderOwner(deleteTarget, user?.email)) {
       setDeleteTarget(null)
       return
     }
@@ -158,7 +158,7 @@ export default function AppSlider() {
               App Slider
             </h1>
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              {isSuperAdmin
+              {isHostAdmin
                 ? 'Create, edit, or delete app banners. Choose whether each banner is for the host or business app.'
                 : 'Create sliders for the guest app. You can edit or delete only the sliders tied to your account email.'}
             </p>
@@ -177,7 +177,7 @@ export default function AppSlider() {
         <CardContent className="p-0">
           <AppSliderTable
             sliders={pageItems}
-            isSuperAdmin={isSuperAdmin}
+            isSuperAdmin={isHostAdmin}
             currentUserEmail={user?.email}
             onEdit={openEdit}
             onDelete={requestDelete}
@@ -206,7 +206,7 @@ export default function AppSlider() {
         }}
         mode={modalMode}
         slider={editingSlider}
-        isSuperAdmin={isSuperAdmin}
+        isSuperAdmin={isHostAdmin}
         defaultTargetType={defaultTargetType}
         onSave={handleSave}
       />

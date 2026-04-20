@@ -103,18 +103,18 @@ function App() {
             path="dashboard"
             element={
               <RoleBasedRoute
-                allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}
+                allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}
               >
                 <Dashboard />
               </RoleBasedRoute>
             }
           />
           
-          {/* User Management - Super Admin Only */}
+          {/* User Management - Host Only */}
           <Route 
             path="users" 
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST]}>
                 <UserList />
               </RoleBasedRoute>
             } 
@@ -122,7 +122,7 @@ function App() {
           <Route 
             path="users/:id" 
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST]}>
                 <UserDetails />
               </RoleBasedRoute>
             } 
@@ -130,11 +130,11 @@ function App() {
           
       
           
-          {/* Transactions History - Super Admin Only */}
+          {/* Transactions History - Host Only */}
           <Route 
             path="transactions-history" 
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST]}>
                 <TransactionsHistory />
               </RoleBasedRoute>
             } 
@@ -143,7 +143,7 @@ function App() {
           <Route
             path="controller"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST]}>
                 <ControllerPage />
               </RoleBasedRoute>
             }
@@ -152,7 +152,7 @@ function App() {
           <Route
             path="subscription-packages"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST]}>
                 <SubscriptionPackagePage />
               </RoleBasedRoute>
             }
@@ -162,7 +162,7 @@ function App() {
           <Route 
             path="booking-management" 
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
                 <BookingManagement />
               </RoleBasedRoute>
             } 
@@ -171,7 +171,7 @@ function App() {
           <Route
             path="reviews-ratings"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
                 <ReviewsRatings />
               </RoleBasedRoute>
             }
@@ -180,7 +180,7 @@ function App() {
           <Route
             path="app-slider"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
                 <AppSlider />
               </RoleBasedRoute>
             }
@@ -189,7 +189,7 @@ function App() {
           <Route
             path="subscription"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
                 <Subscription />
               </RoleBasedRoute>
             }
@@ -198,7 +198,7 @@ function App() {
           <Route
             path="notification"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
                 <NotificationPage />
               </RoleBasedRoute>
             }
@@ -207,7 +207,7 @@ function App() {
           <Route
             path="support"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
                 <Support />
               </RoleBasedRoute>
             }
@@ -216,7 +216,7 @@ function App() {
           <Route
             path="my-listing/new"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
                 <MyListingNewPage />
               </RoleBasedRoute>
             }
@@ -224,7 +224,7 @@ function App() {
           <Route
             path="my-listing/:id/edit"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
                 <MyListingEditPage />
               </RoleBasedRoute>
             }
@@ -232,7 +232,7 @@ function App() {
           <Route
             path="my-listing"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
                 <MyListingPage />
               </RoleBasedRoute>
             }
@@ -243,7 +243,7 @@ function App() {
           <Route 
             path="calender" 
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
                 <Calender />
               </RoleBasedRoute>
             } 
@@ -266,7 +266,7 @@ function App() {
             <Route 
               path="faq" 
               element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                <RoleBasedRoute allowedRoles={[UserRole.HOST]}>
                   <FAQ />
                 </RoleBasedRoute>
               } 

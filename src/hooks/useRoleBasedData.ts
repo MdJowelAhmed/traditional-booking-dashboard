@@ -8,14 +8,14 @@ interface DataItem {
   [key: string]: string | number | undefined
 }
 
-/** Super Admin and Host see all rows; Business sees only its scope. */
+/** Host sees all rows; Business sees only its scope. */
 export const useRoleBasedData = <T extends DataItem>(data: T[]): T[] => {
   const { user } = useAppSelector((state) => state.auth)
 
   return useMemo(() => {
     if (!user) return []
 
-    if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.HOST) {
+    if (user.role === UserRole.HOST) {
       return data
     }
 
@@ -56,7 +56,7 @@ export const useCanModifyItem = (item: DataItem): boolean => {
 
   if (!user) return false
 
-  if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.HOST) {
+  if (user.role === UserRole.HOST) {
     return true
   }
 

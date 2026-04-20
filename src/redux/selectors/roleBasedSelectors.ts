@@ -28,7 +28,7 @@ export const selectCanModifyItem = (
   const { user } = state.auth
   if (!user) return false
 
-  if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.HOST) {
+  if (user.role === UserRole.HOST) {
     return true
   }
 

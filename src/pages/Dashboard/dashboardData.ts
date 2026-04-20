@@ -45,7 +45,7 @@ export const yearlyData: Record<string, ChartDataPoint[]> = Object.fromEntries(
 
 export const years = Object.keys(salesRevenueByYear).sort((a, b) => Number(b) - Number(a))
 
-/** Super admin dashboard: monthly counts by account type (no sales). */
+/** Host admin dashboard: monthly counts by account type (no sales). */
 export type SuperAdminPlatformChartPoint = {
     month: string
     users: number
@@ -129,7 +129,7 @@ export const superAdminPlatformYearlyData: Record<string, SuperAdminPlatformChar
         ])
     ) as Record<string, SuperAdminPlatformChartPoint[]>
 
-/** Platform-wide totals for super admin stat cards (mock until API exists). */
+/** Platform-wide totals for Host admin stat cards (mock until API exists). */
 export const superAdminDashboardStats = {
     totalUsers: 15_720,
     totalHosts: 216,

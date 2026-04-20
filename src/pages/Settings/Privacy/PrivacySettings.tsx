@@ -74,7 +74,7 @@ const defaultPrivacy = `<h1>Privacy Policy</h1>
 
 export default function PrivacySettings() {
   const { user } = useAppSelector((state) => state.auth)
-  const canManage = user?.role === UserRole.SUPER_ADMIN
+  const canManage = user?.role === UserRole.HOST
 
   const [privacy, setPrivacy] = useState(defaultPrivacy)
   const [isSubmitting, setIsSubmitting] = useState(false)

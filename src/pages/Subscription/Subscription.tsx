@@ -47,7 +47,7 @@ function displayNameFromUser(user: {
 export default function Subscription() {
   const { user } = useAppSelector((s) => s.auth)
   const role = user?.role ?? ''
-  const isSuperAdmin = role === UserRole.SUPER_ADMIN
+  const isHostAdmin = role === UserRole.HOST
   const isSubscriber = role === UserRole.HOST || role === UserRole.BUSINESS
 
   const [page, setPage] = useUrlNumber('page', 1)
@@ -66,7 +66,7 @@ export default function Subscription() {
     )
   }, [rows, isSubscriber, user?.email, role])
 
-  const tableRows = isSuperAdmin ? rows : subscriberRows
+  const tableRows = isHostAdmin ? rows : subscriberRows
 
   const totalItems = tableRows.length
   const totalPages = Math.max(1, Math.ceil(totalItems / limit))
@@ -131,7 +131,7 @@ export default function Subscription() {
               Subscription
             </h1>
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              {isSuperAdmin
+              {isHostAdmin
                 ? 'Review and update all subscriber records'
                 : 'Manage your subscription plan and payment methods'}
             </p>
@@ -149,7 +149,7 @@ export default function Subscription() {
         </div>
 
         <CardContent className="p-0">
-          {isSuperAdmin ? (
+          {isHostAdmin ? (
             <SubscriptionTable
               mode="admin"
               rows={pageItems}

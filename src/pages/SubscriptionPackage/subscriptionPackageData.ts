@@ -1,6 +1,6 @@
 import { PACKAGE_TIERS } from '@/pages/Subscription/subscriptionData'
 
-/** Package definition managed by super-admin (drives card UI + buy flow can sync later). */
+/** Package definition managed by Host admin (drives card UI + buy flow can sync later). */
 export interface AdminSubscriptionPackage {
   id: string
   name: string

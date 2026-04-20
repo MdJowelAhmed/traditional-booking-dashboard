@@ -44,7 +44,7 @@ const navItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS], 
+    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
   },
 
   {
@@ -65,19 +65,19 @@ const navItems: NavItem[] = [
   //   title: 'Calendar',
   //   href: '/calender',
   //   icon: Calendar,
-  //   allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+  //   allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
   // },
   // {
   //   title: 'Transactions History',
   //   href: '/transactions-history',
   //   icon: CreditCard,
-  //   allowedRoles: [UserRole.SUPER_ADMIN], // Super Admin only
+  //   allowedRoles: [UserRole.HOST], // Host only
   // },
   {
     title: 'Controller',
     href: '/controller',
     icon: Gamepad2,
-    allowedRoles: [UserRole.SUPER_ADMIN],
+    allowedRoles: [UserRole.HOST],
   },
   {
     title: 'Reviews & Ratings',
@@ -89,19 +89,19 @@ const navItems: NavItem[] = [
     title: 'App Slider',
     href: '/app-slider',
     icon: ImageIcon,
-    allowedRoles: [UserRole.SUPER_ADMIN, ],
+    allowedRoles: [UserRole.HOST],
   },
   {
     title: 'Subscription Package',
     href: '/subscription-packages',
     icon: Package,
-    allowedRoles: [UserRole.SUPER_ADMIN],
+    allowedRoles: [UserRole.HOST],
   },
   {
     title: 'Subscription',
     href: '/subscription',
     icon: Crown,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
   },
   {
     title: 'Support',
@@ -117,37 +117,37 @@ const settingsItems: NavItem[] = [
     title: 'Profile',
     href: '/settings/profile',
     icon: User,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
   },
   {
     title: 'Password',
     href: '/settings/password',
     icon: Lock,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
   },
   {
     title: 'Terms',
     href: '/settings/terms',
     icon: FileText,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
   },
   {
     title: 'Privacy',
     href: '/settings/privacy',
     icon: Shield,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
   },
   {
     title: 'About Us',
     href: '/settings/about-us',
     icon: Info,
-    allowedRoles: [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
   },
   // {
   //   title: 'FAQ',
   //   href: '/settings/faq',
   //   icon: HelpCircle,
-  //   allowedRoles: [UserRole.SUPER_ADMIN],
+  //   allowedRoles: [UserRole.HOST],
   // },
 ]
 
@@ -161,18 +161,11 @@ export function Sidebar() {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const isSettingsActive = location.pathname.startsWith('/settings')
 
-  // 🔍 Console log for debugging
-  console.log('📊 Sidebar Debug Info:');
-  console.log('User:', user);
-  console.log('User Role:', user?.role);
-  console.log('User Role Type:', typeof user?.role);
-
   // Filter navigation items based on user role
   const filteredNavItems = navItems.filter((item) => {
     if (!item.allowedRoles) return true // No restriction
     if (!user) return false
     const hasAccess = item.allowedRoles.includes(user.role as UserRole)
-    console.log(`🔐 ${item.title}: hasAccess=${hasAccess}, userRole=${user.role}, allowedRoles=${item.allowedRoles.join(', ')}`)
     return hasAccess
   })
 

@@ -14,7 +14,7 @@ const baseSchema = z.object({
   buttonLabel: z.string().min(1, 'Button name is required'),
 })
 
-const superAdminSchema = baseSchema.extend({
+const adminSchema = baseSchema.extend({
   targetType: z.enum(['host', 'business'], {
     required_error: 'Select who this banner is for',
   }),
@@ -31,7 +31,7 @@ interface CreateEditSliderModalProps {
   onClose: () => void
   mode: 'create' | 'edit'
   slider?: AppSliderItem | null
-  /** Super admin can choose host vs business audience. */
+  /** Admin (Host) can choose host vs business audience. */
   isSuperAdmin: boolean
   /** For host/business users: audience matches their role (not shown in form). */
   defaultTargetType: AppSliderTargetType
@@ -57,7 +57,7 @@ export function CreateEditSliderModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const schema = useMemo(
-    () => (isSuperAdmin ? superAdminSchema : baseSchema),
+    () => (isSuperAdmin ? adminSchema : baseSchema),
     [isSuperAdmin]
   )
 

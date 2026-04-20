@@ -30,7 +30,7 @@ const defaultAbout = `<h1>About Us</h1>
 
 export default function AboutUsSettings() {
   const { user } = useAppSelector((state) => state.auth)
-  const canManage = user?.role === UserRole.SUPER_ADMIN
+  const canManage = user?.role === UserRole.HOST
 
   const [about, setAbout] = useState(defaultAbout)
   const [isSubmitting, setIsSubmitting] = useState(false)

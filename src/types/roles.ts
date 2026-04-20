@@ -1,11 +1,10 @@
 // Auth roles — exactly three
 export enum UserRole {
-  SUPER_ADMIN = 'super-admin',
   HOST = 'host',
   BUSINESS = 'business',
 }
 
-const ALL_APP_ROLES = [UserRole.SUPER_ADMIN, UserRole.HOST, UserRole.BUSINESS]
+const ALL_APP_ROLES = [UserRole.HOST, UserRole.BUSINESS]
 
 export interface RoutePermission {
   path: string
@@ -16,12 +15,12 @@ export interface RoutePermission {
 /** Route → allowed roles (extend as you add routes) */
 export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
   '/dashboard': ALL_APP_ROLES,
-  '/users': [UserRole.SUPER_ADMIN],
-  '/controller': [UserRole.SUPER_ADMIN],
-  '/subscription-packages': [UserRole.SUPER_ADMIN],
-  '/agency-management': [UserRole.SUPER_ADMIN],
-  '/transactions-history': [UserRole.SUPER_ADMIN],
-  '/settings/faq': [UserRole.SUPER_ADMIN],
+  '/users': [UserRole.HOST],
+  '/controller': [UserRole.HOST],
+  '/subscription-packages': [UserRole.HOST],
+  '/agency-management': [UserRole.HOST],
+  '/transactions-history': [UserRole.HOST],
+  '/settings/faq': [UserRole.HOST],
   '/settings/terms': ALL_APP_ROLES,
   '/settings/privacy': ALL_APP_ROLES,
   '/settings/about-us': ALL_APP_ROLES,
@@ -40,7 +39,6 @@ export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
 }
 
 export const getDefaultRouteForRole = (role: string): string => {
-  if (role === UserRole.SUPER_ADMIN) return '/dashboard'
   if (role === UserRole.HOST) return '/booking-management'
   if (role === UserRole.BUSINESS) return '/my-listing'
   return '/booking-management'

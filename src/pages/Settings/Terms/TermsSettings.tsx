@@ -52,7 +52,7 @@ const defaultTerms = `<h1>Terms and Conditions</h1>
 
 export default function TermsSettings() {
   const { user } = useAppSelector((state) => state.auth)
-  const canManage = user?.role === UserRole.SUPER_ADMIN
+  const canManage = user?.role === UserRole.HOST
 
   const [terms, setTerms] = useState(defaultTerms)
   const [isSubmitting, setIsSubmitting] = useState(false)

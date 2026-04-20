@@ -41,14 +41,6 @@ type DemoAccount = {
 const demoAccounts: DemoAccount[] = [
   {
     id: "1",
-    email: "superadmin@example.com",
-    password: "password",
-    displayRole: "Super Admin",
-    role: "super-admin",
-    firstName: "Super Admin",
-  },
-  {
-    id: "2",
     email: "host@example.com",
     password: "password",
     displayRole: "Host",
@@ -56,7 +48,7 @@ const demoAccounts: DemoAccount[] = [
     firstName: "Host",
   },
   {
-    id: "3",
+    id: "2",
     email: "business@example.com",
     password: "password",
     displayRole: "Business",

@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react'
 import { formatCurrency, formatCompactNumber } from '@/utils/formatters'
 import { StatCard } from './StatCard'
 import { EarningsSummaryChart } from './EarningsSummaryChart'
-import { SuperAdminPlatformChart } from './SuperAdminPlatformChart'
 import { RecentBookingsCard } from './RecentBookingsCard'
 import {
   yearlyData,
@@ -26,18 +25,17 @@ import { UserRole } from '@/types/roles'
 export default function Dashboard() {
   const { user } = useAppSelector((state) => state.auth)
   const isHost = user?.role === UserRole.HOST
-  const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN
 
   const [selectedYear, setSelectedYear] = useState(defaultChartYear)
 
   const chartData = useMemo(() => yearlyData[selectedYear], [selectedYear])
-  const superAdminChartData = useMemo(
+  const hostPlatformChartData = useMemo(
     () => superAdminPlatformYearlyData[selectedYear] ?? superAdminPlatformYearlyData[defaultChartYear],
     [selectedYear]
   )
 
   const stats = useMemo(() => {
-    if (isSuperAdmin) {
+    if (isHost) {
       const s = superAdminDashboardStats
       return [
         {
@@ -135,7 +133,7 @@ export default function Dashboard() {
         description: 'vs last month',
       },
     ]
-  }, [isHost, isSuperAdmin])
+  }, [isHost])
 
   return (
     <div className="space-y-6">
@@ -150,10 +148,10 @@ export default function Dashboard() {
 
       {/* Chart: full width for super admin (platform metrics); host/business keep sales + bookings */}
       <div className="grid gap-6 lg:grid-cols-12">
-        {isSuperAdmin ? (
+        {isHost ? (
           <div className="col-span-12">
-            <SuperAdminPlatformChart
-              chartData={superAdminChartData}
+            <EarningsSummaryChart
+              chartData={hostPlatformChartData}
               selectedYear={selectedYear}
               onYearChange={setSelectedYear}
             />
