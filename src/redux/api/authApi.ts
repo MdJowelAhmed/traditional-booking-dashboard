@@ -305,7 +305,7 @@ const authApi = baseApi.injectEndpoints({
             UpdateMyBusinessProfilePayload
         >({
             query: (body) => ({
-                url: '/business/my-business',
+                url: '/business/update-business-info',
                 method: 'PATCH',
                 body,
             }),

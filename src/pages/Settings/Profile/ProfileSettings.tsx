@@ -202,19 +202,13 @@ export default function ProfileSettings() {
       className="space-y-6 max-w-4xl mx-auto"
     >
       <Card>
-        <CardHeader>
-          <CardTitle>Business profile</CardTitle>
-          <CardDescription>
-            View your account owner details and update your business information. Owner name and
-            photo cannot be changed here.
-          </CardDescription>
-        </CardHeader>
+        
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
-              <h3 className="font-semibold">Business owner (read-only)</h3>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <Avatar className="h-20 w-20 shrink-0">
+              
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center pt-8">
+                <Avatar className="h-32 w-32 shrink-0">
                   <AvatarImage src={ownerImageUrl} alt={owner?.name ?? 'Owner'} />
                   <AvatarFallback>{ownerInitials}</AvatarFallback>
                 </Avatar>
@@ -231,7 +225,7 @@ export default function ProfileSettings() {
               </div>
             </div>
 
-            <Separator />
+            {/* <Separator />
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted">
@@ -251,7 +245,7 @@ export default function ProfileSettings() {
                   Shown as returned by the server. Image uploads use a separate flow.
                 </p>
               </div>
-            </div>
+            </div> */}
 
             <Separator />
 
@@ -264,6 +258,24 @@ export default function ProfileSettings() {
                 required
                 {...register('name')}
               />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormInput
+                  label="Business email"
+                  type="email"
+                  placeholder="contact@example.com"
+                  error={errors.email?.message}
+                  required
+                  {...register('email')}
+                  disabled
+                />
+                <FormInput
+                  label="Website"
+                  type="url"
+                  placeholder="https://"
+                  error={errors.website?.message}
+                  {...register('website')}
+                />
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormInput
                   label="Location"
@@ -296,6 +308,13 @@ export default function ProfileSettings() {
                   {...register('phoneNumber')}
                 />
               </div>
+              <FormInput
+                label="Office address"
+                placeholder="Full office address"
+                error={errors.officeAddress?.message}
+                required
+                {...register('officeAddress')}
+              />
               <FormTextarea
                 label="Description"
                 placeholder="Describe your business"
@@ -304,30 +323,8 @@ export default function ProfileSettings() {
                 rows={4}
                 {...register('description')}
               />
-              <FormInput
-                label="Office address"
-                placeholder="Full office address"
-                error={errors.officeAddress?.message}
-                required
-                {...register('officeAddress')}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormInput
-                  label="Business email"
-                  type="email"
-                  placeholder="contact@example.com"
-                  error={errors.email?.message}
-                  required
-                  {...register('email')}
-                />
-                <FormInput
-                  label="Website"
-                  type="url"
-                  placeholder="https://"
-                  error={errors.website?.message}
-                  {...register('website')}
-                />
-              </div>
+            
+              
             </div>
 
             <div className="flex justify-end gap-3">

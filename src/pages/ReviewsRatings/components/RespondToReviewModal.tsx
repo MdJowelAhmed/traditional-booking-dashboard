@@ -8,7 +8,9 @@ interface RespondToReviewModalProps {
   open: boolean
   onClose: () => void
   review: ReviewItem | null
-  onSubmit: (payload: { reviewId: string; response: string }) => void
+  onSubmit: (payload: { reviewId: string; response: string }) => void | Promise<void>
+  /** When true, disables actions (e.g. RTK mutation in flight) */
+  isSubmitting?: boolean
 }
 
 export function RespondToReviewModal({
@@ -16,6 +18,7 @@ export function RespondToReviewModal({
   onClose,
   review,
   onSubmit,
+  isSubmitting = false,
 }: RespondToReviewModalProps) {
   const [value, setValue] = useState('')
 
@@ -27,11 +30,17 @@ export function RespondToReviewModal({
 
   if (!review) return null
 
-  const handleSend = () => {
+  const busy = isSubmitting
+
+  const handleSend = async () => {
     const response = value.trim()
-    if (!response) return
-    onSubmit({ reviewId: review.id, response })
-    onClose()
+    if (!response || busy) return
+    try {
+      await Promise.resolve(onSubmit({ reviewId: review.id, response }))
+      onClose()
+    } catch {
+      // Parent shows toast; keep modal open for retry
+    }
   }
 
   return (
@@ -65,13 +74,14 @@ export function RespondToReviewModal({
         </div>
 
         <div className="flex justify-end gap-3 pt-2 border-t">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             Cancel
           </Button>
           <Button
-            onClick={handleSend}
+            onClick={() => void handleSend()}
             className="bg-green-600 hover:bg-green-700 text-white"
-            disabled={!value.trim()}
+            disabled={!value.trim() || busy}
+            isLoading={busy}
           >
             Send Response
           </Button>

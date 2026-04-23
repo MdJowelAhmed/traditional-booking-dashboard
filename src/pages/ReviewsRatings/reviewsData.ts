@@ -1,3 +1,5 @@
+import type { SellerFeedbackItem } from '@/redux/api/reviewRatingApi'
+
 export type ReviewStatus = 'pending' | 'responded'
 
 export interface ReviewItem {
@@ -10,6 +12,42 @@ export interface ReviewItem {
   comment: string
   response?: string
   status: ReviewStatus
+}
+
+function resolveApiMediaUrl(path: string | undefined | null): string | undefined {
+  if (!path?.trim()) return undefined
+  const trimmed = path.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  const base = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? ''
+  return base ? `${base}${trimmed.startsWith('/') ? trimmed : `/${trimmed}`}` : trimmed
+}
+
+function formatReviewDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  } catch {
+    return iso
+  }
+}
+
+export function mapSellerFeedbackToReviewItem(item: SellerFeedbackItem): ReviewItem {
+  const r = Math.round(Number(item.rating))
+  const rating = (Math.min(5, Math.max(1, r)) || 1) as ReviewItem['rating']
+  return {
+    id: item._id,
+    guestName: item.userName ?? 'User',
+    guestAvatarUrl: resolveApiMediaUrl(item.userImage),
+    roomName: item.productName ?? '—',
+    rating,
+    date: formatReviewDate(item.createdAt),
+    comment: item.comment ?? '',
+    response: item.reply?.trim() ? item.reply : undefined,
+    status: item.isResponded ? 'responded' : 'pending',
+  }
 }
 
 export const mockReviews: ReviewItem[] = [
