@@ -10,6 +10,23 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/utils/toast'
 import { cn } from '@/utils/cn'
 import { motion } from 'framer-motion'
+import { useChangePasswordMutation } from '@/redux/api/authApi'
+
+function getErrorMessage(err: unknown): string {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'data' in err &&
+    err.data &&
+    typeof err.data === 'object' &&
+    'message' in err.data &&
+    typeof (err.data as { message: unknown }).message === 'string'
+  ) {
+    return (err.data as { message: string }).message
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong. Please try again.'
+}
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -28,20 +45,21 @@ const passwordSchema = z.object({
 
 type PasswordFormData = z.infer<typeof passwordSchema>
 
-interface PasswordInputProps {
+interface PasswordInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'error'> {
   label: string
+  /** Validation / helper message shown under the field */
   error?: string
   helperText?: string
   required?: boolean
 }
 
-function PasswordInput({
-  label,
-  error,
-  helperText,
-  required,
-  ...props
-}: PasswordInputProps & React.InputHTMLAttributes<HTMLInputElement>) {
+/** Must use forwardRef so react-hook-form `register()` ref reaches the real &lt;input&gt;. */
+const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
+  function PasswordInput(
+    { label, error, helperText, required, className, ...props },
+    ref
+  ) {
   const [showPassword, setShowPassword] = useState(false)
 
   return (
@@ -52,8 +70,10 @@ function PasswordInput({
       </Label>
       <div className="relative">
         <Input
+          ref={ref}
           type={showPassword ? 'text' : 'password'}
-          className={cn('pr-10', error && 'border-destructive')}
+          className={cn('pr-10', className)}
+          error={!!error}
           {...props}
         />
         <button
@@ -74,10 +94,13 @@ function PasswordInput({
       )}
     </div>
   )
-}
+  }
+)
+
+PasswordInput.displayName = 'PasswordInput'
 
 export default function ChangePassword() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [changePassword, { isLoading: isSubmitting }] = useChangePasswordMutation()
 
   const {
     register,
@@ -100,20 +123,25 @@ export default function ChangePassword() {
   ]
 
   const onSubmit = async (data: PasswordFormData) => {
-    setIsSubmitting(true)
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    
-    console.log('Password change:', data)
-    
-    toast({
-      title: 'Password Changed',
-      description: 'Your password has been changed successfully.',
-    })
-    
-    reset()
-    setIsSubmitting(false)
+    try {
+      await changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword,
+      }).unwrap()
+
+      toast({
+        title: 'Password changed',
+        description: 'Your password has been updated successfully.',
+      })
+      reset()
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not change password',
+        description: getErrorMessage(err),
+      })
+    }
   }
 
   return (

@@ -125,6 +125,62 @@ export function buildProfileUpdateFormData(
     return formData;
 }
 
+/** Populated owner on GET /business/my-business */
+export interface BusinessOwnerSummary {
+    _id: string;
+    name: string;
+    email: string;
+    image?: string;
+    isVerified: boolean;
+}
+
+export interface MyBusinessProfileEntity {
+    _id: string;
+    ownerId: BusinessOwnerSummary;
+    name: string;
+    location: string;
+    cityState: string;
+    zipCode: string;
+    description: string;
+    phoneNumber: string;
+    officeAddress: string;
+    email: string;
+    website?: string;
+    image?: string;
+    roleType: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    __v?: number;
+}
+
+export interface GetMyBusinessProfileResponse {
+    success: boolean;
+    message: string;
+    statusCode?: number;
+    data: MyBusinessProfileEntity;
+}
+
+/** JSON body for PATCH /business/my-business (no multipart). */
+export interface UpdateMyBusinessProfilePayload {
+    name: string;
+    location: string;
+    cityState: string;
+    zipCode: string;
+    description: string;
+    phoneNumber: string;
+    officeAddress: string;
+    email: string;
+    website?: string;
+}
+
+export interface UpdateMyBusinessProfileResponse {
+    success: boolean;
+    message: string;
+    statusCode?: number;
+    data: MyBusinessProfileEntity;
+}
+
 const authApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         login: builder.mutation<LoginResponse, LoginCredentials>({
@@ -237,6 +293,25 @@ const authApi = baseApi.injectEndpoints({
             invalidatesTags: ['Auth'],
         }),
 
+        getMyBusinessProfile: builder.query<GetMyBusinessProfileResponse, void>({
+            query: () => ({
+                url: '/business/my-business',
+                method: 'GET',
+            }),
+            providesTags: ['Auth'],
+        }),
+        updateMyBusinessProfile: builder.mutation<
+            UpdateMyBusinessProfileResponse,
+            UpdateMyBusinessProfilePayload
+        >({
+            query: (body) => ({
+                url: '/business/my-business',
+                method: 'PATCH',
+                body,
+            }),
+            invalidatesTags: ['Auth'],
+        }),
+
 
     }),
 
@@ -254,5 +329,7 @@ export const {
     useResentOtpMutation,
     useGetMyProfileQuery,
     useUpdateMyProfileMutation,
+    useGetMyBusinessProfileQuery,
+    useUpdateMyBusinessProfileMutation,
  } =
     authApi
