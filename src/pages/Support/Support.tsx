@@ -9,6 +9,7 @@ import { useGetChatListUserQuery } from '@/redux/api/chatApi'
 import { useGetMessageByChatIdQuery, useSendMessageMutation } from '@/redux/api/messageApi'
 import { toast } from 'sonner'
 import { useAppSelector } from '@/redux/hooks'
+import { imageUrl } from '@/components/common/imageUrl'
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -144,7 +145,7 @@ export default function Support() {
                   const isActive = c._id === activeId
                   const participant = c.participants?.[0]
                   const displayName = participant?.name ?? '—'
-                  const avatarUrl = participant?.image ? participant.image : undefined
+                  const avatarUrl = participant?.image ? imageUrl(participant.image) : undefined
                   const lastText =
                     c.lastMessage?.type === 'image'
                       ? '📷 Image'
@@ -201,7 +202,7 @@ export default function Support() {
               {(() => {
                 const participant = activeConversation?.participants?.[0]
                 const displayName = participant?.name ?? '—'
-                const avatarUrl = participant?.image ? participant.image : undefined
+                const avatarUrl = participant?.image ? imageUrl(participant.image) : undefined
                 return (
                   <>
                     <Avatar className="h-10 w-10">
@@ -258,7 +259,7 @@ export default function Support() {
                           {m.images.slice(0, 4).map((src) => (
                             <img
                               key={src}
-                              src={src}
+                              src={imageUrl(src)}
                               alt="message"
                               className="h-28 w-40 object-cover rounded-md bg-black/10"
                             />
