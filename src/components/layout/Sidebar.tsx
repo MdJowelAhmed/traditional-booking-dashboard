@@ -44,28 +44,28 @@ const navItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.SERVICE],
   },
 
   {
     title: 'My Listing',
     href: '/my-listing',
     icon: ListChecksIcon,
-    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [ UserRole.HOST, UserRole.SERVICE],
   },
   
   {
     title: 'Booking Management',
     href: '/booking-management',
     icon: ListOrdered,
-    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [ UserRole.HOST, UserRole.SERVICE],
   },
 
   // {
   //   title: 'Calendar',
   //   href: '/calender',
   //   icon: Calendar,
-  //   allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
+  //   allowedRoles: [UserRole.HOST, UserRole.SERVICE],
   // },
   // {
   //   title: 'Transactions History',
@@ -83,7 +83,7 @@ const navItems: NavItem[] = [
     title: 'Reviews & Ratings',
     href: '/reviews-ratings',
     icon: Star,
-    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [ UserRole.HOST, UserRole.SERVICE],
   },
   {
     title: 'App Slider',
@@ -101,13 +101,13 @@ const navItems: NavItem[] = [
     title: 'Subscription',
     href: '/subscription',
     icon: Crown,
-    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.SERVICE],
   },
   {
     title: 'Support',
     href: '/support',
     icon: LifeBuoy,
-    allowedRoles: [ UserRole.HOST, UserRole.BUSINESS ],
+    allowedRoles: [ UserRole.HOST, UserRole.SERVICE ],
   },
 
 ]
@@ -117,31 +117,31 @@ const settingsItems: NavItem[] = [
     title: 'Profile',
     href: '/settings/profile',
     icon: User,
-    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.SERVICE],
   },
   {
     title: 'Password',
     href: '/settings/password',
     icon: Lock,
-    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.SERVICE],
   },
   {
     title: 'Terms',
     href: '/settings/terms',
     icon: FileText,
-    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.SERVICE],
   },
   {
     title: 'Privacy',
     href: '/settings/privacy',
     icon: Shield,
-    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.SERVICE],
   },
   {
     title: 'About Us',
     href: '/settings/about-us',
     icon: Info,
-    allowedRoles: [UserRole.HOST, UserRole.BUSINESS],
+    allowedRoles: [UserRole.HOST, UserRole.SERVICE],
   },
   // {
   //   title: 'FAQ',

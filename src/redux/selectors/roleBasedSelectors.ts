@@ -32,7 +32,7 @@ export const selectCanModifyItem = (
     return true
   }
 
-  if (user.role === UserRole.BUSINESS && user.businessId) {
+  if (user.role === UserRole.SERVICE && user.businessId) {
     return itemBusinessId === user.businessId
   }
 

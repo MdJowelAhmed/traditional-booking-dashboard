@@ -15,7 +15,7 @@ export function UserRoleIndicator() {
         <RoleBadge role={user.role} />
       </div>
 
-      {user.role === UserRole.BUSINESS && user.businessName && (
+      {user.role === UserRole.SERVICE && user.businessName && (
         <div className="flex items-center gap-1.5 border-t pt-2 text-xs text-muted-foreground mt-1">
           <Building2 className="h-3 w-3 shrink-0" />
           <span className="truncate">{user.businessName}</span>

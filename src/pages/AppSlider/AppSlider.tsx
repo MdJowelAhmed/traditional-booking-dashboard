@@ -27,7 +27,7 @@ function nextDisplaySerial(sliders: AppSliderItem[]): string {
 }
 
 function roleToSliderTargetType(role: string): AppSliderTargetType {
-  if (role === UserRole.BUSINESS) return 'business'
+  if (role === UserRole.SERVICE) return 'business'
   return 'host'
 }
 

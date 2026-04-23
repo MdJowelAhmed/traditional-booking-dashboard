@@ -29,7 +29,7 @@ function nextDisplaySerial(rows: SubscriptionRow[]): string {
 }
 
 function roleToAccountType(role: string): SubscriptionAccountType {
-  if (role === UserRole.BUSINESS) return 'business'
+  if (role === UserRole.SERVICE) return 'business'
   return 'host'
 }
 
@@ -48,7 +48,7 @@ export default function Subscription() {
   const { user } = useAppSelector((s) => s.auth)
   const role = user?.role ?? ''
   const isHostAdmin = role === UserRole.HOST
-  const isSubscriber = role === UserRole.HOST || role === UserRole.BUSINESS
+  const isSubscriber = role === UserRole.HOST || role === UserRole.SERVICE
 
   const [page, setPage] = useUrlNumber('page', 1)
   const [limit, setLimit] = useUrlNumber('limit', 10)

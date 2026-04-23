@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { formatCurrency, formatCompactNumber } from '@/utils/formatters'
 import { StatCard } from './StatCard'
 import { EarningsSummaryChart } from './EarningsSummaryChart'
+import { SuperAdminPlatformChart } from './SuperAdminPlatformChart'
 import { RecentBookingsCard } from './RecentBookingsCard'
 import {
   yearlyData,
@@ -150,7 +151,7 @@ export default function Dashboard() {
       <div className="grid gap-6 lg:grid-cols-12">
         {isHost ? (
           <div className="col-span-12">
-            <EarningsSummaryChart
+            <SuperAdminPlatformChart
               chartData={hostPlatformChartData}
               selectedYear={selectedYear}
               onYearChange={setSelectedYear}

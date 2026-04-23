@@ -1,8 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { parseJwtPayload } from '@/utils/jwt'
 
-export type AuthUserRole = 'host' | 'business'
+/** Dashboard access: JWT uses HOST / SERVICE (uppercase). */
+export type AuthUserRole = 'host' | 'service'
 
-interface User {
+export interface AuthUser {
   id: string
   email: string
   firstName: string
@@ -13,17 +15,22 @@ interface User {
   businessName?: string
 }
 
-/** Maps legacy stored roles and API values to current AuthUserRole */
-export function normalizeAuthRole(role: string): AuthUserRole {
-  if (role === 'host') return 'host'
-  if (role === 'business') return 'business'
-  if (role === 'admin') return 'host'
-  if (role === 'employee') return 'business'
-  return 'business'
+/**
+ * Maps API/JWT role to dashboard role. Only HOST and SERVICE are allowed.
+ * BUSINESS (and anything else) → null (login / session rejected).
+ */
+export function normalizeAuthRole(raw: string): AuthUserRole | null {
+  const u = raw.trim().toUpperCase()
+  if (u === 'HOST') return 'host'
+  if (u === 'SERVICE') return 'service'
+  const lower = raw.trim().toLowerCase()
+  if (lower === 'host') return 'host'
+  if (lower === 'service') return 'service'
+  return null
 }
 
 interface AuthState {
-  user: User | null
+  user: AuthUser | null
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
@@ -32,20 +39,53 @@ interface AuthState {
   verificationEmail: string | null
 }
 
-function safeParseUser(userStr: string | null): User | null {
-  if (!userStr) return null
+export function buildUserFromAccessToken(token: string): AuthUser | null {
+  const claims = parseJwtPayload<{
+    id?: string
+    email?: string
+    role?: string
+  }>(token)
+  if (!claims) return null
+  if (!claims.id && !claims.email) return null
+
+  const role = normalizeAuthRole(String(claims.role ?? ''))
+  if (!role) return null
+
+  const email = String(claims.email ?? '')
+  const localPart = email.includes('@') ? email.split('@')[0]! : email
+
+  return {
+    id: String(claims.id ?? ''),
+    email,
+    firstName: localPart || 'User',
+    lastName: '',
+    role,
+  }
+}
+
+function readTokenFromStorage(): string | null {
   try {
-    const raw = JSON.parse(userStr) as User
-    return { ...raw, role: normalizeAuthRole(raw.role) }
+    localStorage.removeItem('user')
+    const token = localStorage.getItem('token')
+    if (!token) return null
+    const user = buildUserFromAccessToken(token)
+    if (!user) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      return null
+    }
+    return token
   } catch {
     return null
   }
 }
 
+const storedToken = readTokenFromStorage()
+
 const initialState: AuthState = {
-  user: safeParseUser(localStorage.getItem('user')),
-  token: localStorage.getItem('token'),
-  isAuthenticated: !!localStorage.getItem('token') && !!localStorage.getItem('user'),
+  user: storedToken ? buildUserFromAccessToken(storedToken) : null,
+  token: storedToken,
+  isAuthenticated: !!storedToken,
   isLoading: false,
   error: null,
   passwordResetEmail: null,
@@ -60,18 +100,33 @@ const authSlice = createSlice({
       state.isLoading = true
       state.error = null
     },
-    loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
+    loginSuccess: (
+      state,
+      action: PayloadAction<{
+        user: AuthUser
+        token: string
+        refreshToken?: string
+      }>
+    ) => {
       state.isLoading = false
       state.isAuthenticated = true
-      const user = {
-        ...action.payload.user,
-        role: normalizeAuthRole(action.payload.user.role),
+      const role = normalizeAuthRole(action.payload.user.role)
+      if (!role) {
+        state.isLoading = false
+        state.isAuthenticated = false
+        state.user = null
+        state.token = null
+        state.error = 'Only Host and Service accounts can sign in.'
+        return
       }
+      const user = { ...action.payload.user, role }
       state.user = user
       state.token = action.payload.token
       state.error = null
       localStorage.setItem('token', action.payload.token)
-      localStorage.setItem('user', JSON.stringify(user))
+      if (action.payload.refreshToken) {
+        localStorage.setItem('refreshToken', action.payload.refreshToken)
+      }
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.isLoading = false
@@ -83,7 +138,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false
       state.error = null
       localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      localStorage.removeItem('refreshToken')
     },
     setPasswordResetEmail: (state, action: PayloadAction<string>) => {
       state.passwordResetEmail = action.payload
@@ -98,20 +153,11 @@ const authSlice = createSlice({
       state.isLoading = action.payload
     },
     loadUserFromStorage: (state) => {
-      const token = localStorage.getItem('token')
-      const userStr = localStorage.getItem('user')
-      const user = safeParseUser(userStr)
-
-      if (token && user) {
-        state.user = user
-        state.token = token
-        state.isAuthenticated = true
-        return
-      }
-
-      state.user = null
+      const token = readTokenFromStorage()
+      const user = token ? buildUserFromAccessToken(token) : null
       state.token = token
-      state.isAuthenticated = false
+      state.user = user
+      state.isAuthenticated = !!token && !!user
     },
   },
 })
@@ -129,15 +175,3 @@ export const {
 } = authSlice.actions
 
 export default authSlice.reducer
-
-
-
-
-
-
-
-
-
-
-
-

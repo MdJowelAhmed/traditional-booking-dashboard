@@ -11,7 +11,7 @@ interface RoleBadgeProps {
 }
 
 export function RoleBadge({ role, className, showIcon = true }: RoleBadgeProps) {
-  const variant = role === UserRole.HOST ? 'host' : 'business'
+  const variant = role === UserRole.HOST ? 'host' : 'service'
 
   return (
     <Badge
@@ -20,7 +20,7 @@ export function RoleBadge({ role, className, showIcon = true }: RoleBadgeProps) 
         'gap-1 font-medium border-0',
         variant === 'host' &&
           'bg-purple-100 text-purple-800 hover:bg-purple-200/90',
-        variant === 'business' &&
+        variant === 'service' &&
           'bg-blue-100 text-blue-800 hover:bg-blue-200/90',
         className
       )}

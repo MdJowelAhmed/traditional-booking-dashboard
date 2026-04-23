@@ -7,14 +7,14 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   loginStart,
   loginSuccess,
   loginFailure,
+  buildUserFromAccessToken,
 } from "@/redux/slices/authSlice";
-import type { AuthUserRole } from "@/redux/slices/authSlice";
+import { useLoginMutation } from "@/redux/api/authApi";
 import { cn } from "@/utils/cn";
 import { motion } from "framer-motion";
 import { getDefaultRouteForRole } from "@/types/roles";
@@ -27,42 +27,27 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-type DemoAccount = {
-  id: string;
-  email: string;
-  password: string;
-  displayRole: string;
-  role: AuthUserRole;
-  firstName: string;
-  businessId?: string;
-  businessName?: string;
-};
-
-const demoAccounts: DemoAccount[] = [
-  {
-    id: "1",
-    email: "host@example.com",
-    password: "password",
-    displayRole: "Host",
-    role: "host",
-    firstName: "Host",
-  },
-  {
-    id: "2",
-    email: "business@example.com",
-    password: "password",
-    displayRole: "Business",
-    role: "business",
-    firstName: "Business",
-    businessId: "business-demo-001",
-    businessName: "Demo Property Co.",
-  },
-];
+function errorMessageFromLoginError(err: unknown): string {
+  if (err && typeof err === "object" && "status" in err) {
+    const e = err as { status?: number; data?: unknown };
+    const data = e.data as { message?: string; error?: string } | undefined;
+    if (data?.message && typeof data.message === "string") return data.message;
+    if (data?.error && typeof data.error === "string") return data.error;
+    if (typeof e.status === "number") {
+      return e.status === 401 || e.status === 400
+        ? "Invalid email or password"
+        : "Unable to sign in. Please try again.";
+    }
+  }
+  if (err instanceof Error) return err.message;
+  return "An error occurred. Please try again.";
+}
 
 export default function Login() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector((state) => state.auth);
+  const [loginMutation] = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -82,35 +67,55 @@ export default function Login() {
     dispatch(loginStart());
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const res = await loginMutation({
+        email: data.email.trim(),
+        password: data.password,
+      }).unwrap();
 
-      const found = demoAccounts.find(
-        (u) => u.email === data.email && u.password === data.password
-      );
+      if (!res.success) {
+        dispatch(
+          loginFailure(
+            res.message?.trim() ? res.message : "Sign in was not successful."
+          )
+        );
+        return;
+      }
 
-      if (!found) {
-        dispatch(loginFailure("Invalid email or password"));
+      const accessToken = res.data?.accessToken;
+      if (!accessToken) {
+        dispatch(
+          loginFailure(
+            res.message?.trim()
+              ? res.message
+              : "No access token received from server."
+          )
+        );
+        return;
+      }
+
+      const user = buildUserFromAccessToken(accessToken);
+      if (!user) {
+        dispatch(
+          loginFailure(
+            "This account is not allowed. Only Host and Service roles can use this dashboard."
+          )
+        );
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
         return;
       }
 
       dispatch(
         loginSuccess({
-          user: {
-            id: found.id,
-            email: found.email,
-            firstName: found.firstName,
-            lastName: "User",
-            role: found.role,
-            businessId: found.businessId,
-            businessName: found.businessName,
-          },
-          token: "mock-jwt-token-" + Date.now(),
+          user,
+          token: accessToken,
+          refreshToken: res.data?.refreshToken,
         })
       );
 
-      navigate(getDefaultRouteForRole(found.role), { replace: true });
-    } catch {
-      dispatch(loginFailure("An error occurred. Please try again."));
+      navigate(getDefaultRouteForRole(user.role), { replace: true });
+    } catch (err) {
+      dispatch(loginFailure(errorMessageFromLoginError(err)));
     }
   };
 
@@ -230,30 +235,6 @@ export default function Login() {
           )}
         </Button>
       </form>
-
-      <div className="relative">
-        <Separator />
-        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
-          Demo Credentials
-        </span>
-      </div>
-
-      <div className="p-4 rounded-lg bg-muted/50 border text-sm space-y-3">
-        {demoAccounts.map((acc, index) => (
-          <div key={acc.id}>
-            <div className="space-y-1">
-              <p className="font-semibold text-foreground">{acc.displayRole}</p>
-              <p>
-                <strong>Email:</strong> {acc.email}
-              </p>
-              <p>
-                <strong>Pass:</strong> {acc.password}
-              </p>
-            </div>
-            {index < demoAccounts.length - 1 && <Separator className="my-3" />}
-          </div>
-        ))}
-      </div>
     </div>
-  )
+  );
 }

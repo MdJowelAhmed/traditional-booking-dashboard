@@ -103,7 +103,7 @@ function App() {
             path="dashboard"
             element={
               <RoleBasedRoute
-                allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}
+                allowedRoles={[UserRole.HOST, UserRole.SERVICE]}
               >
                 <Dashboard />
               </RoleBasedRoute>
@@ -162,7 +162,7 @@ function App() {
           <Route 
             path="booking-management" 
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
                 <BookingManagement />
               </RoleBasedRoute>
             } 
@@ -171,7 +171,7 @@ function App() {
           <Route
             path="reviews-ratings"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
                 <ReviewsRatings />
               </RoleBasedRoute>
             }
@@ -180,7 +180,7 @@ function App() {
           <Route
             path="app-slider"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
                 <AppSlider />
               </RoleBasedRoute>
             }
@@ -189,7 +189,7 @@ function App() {
           <Route
             path="subscription"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
                 <Subscription />
               </RoleBasedRoute>
             }
@@ -198,7 +198,7 @@ function App() {
           <Route
             path="notification"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
                 <NotificationPage />
               </RoleBasedRoute>
             }
@@ -207,7 +207,7 @@ function App() {
           <Route
             path="support"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
                 <Support />
               </RoleBasedRoute>
             }
@@ -216,7 +216,7 @@ function App() {
           <Route
             path="my-listing/new"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
                 <MyListingNewPage />
               </RoleBasedRoute>
             }
@@ -224,7 +224,7 @@ function App() {
           <Route
             path="my-listing/:id/edit"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
                 <MyListingEditPage />
               </RoleBasedRoute>
             }
@@ -232,7 +232,7 @@ function App() {
           <Route
             path="my-listing"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
                 <MyListingPage />
               </RoleBasedRoute>
             }
@@ -243,7 +243,7 @@ function App() {
           <Route 
             path="calender" 
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.BUSINESS]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
                 <Calender />
               </RoleBasedRoute>
             } 

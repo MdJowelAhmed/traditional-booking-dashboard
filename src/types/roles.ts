@@ -1,10 +1,10 @@
-// Auth roles — exactly three
+// Auth roles for this dashboard: HOST and SERVICE only (no legacy "business" role).
 export enum UserRole {
   HOST = 'host',
-  BUSINESS = 'business',
+  SERVICE = 'service',
 }
 
-const ALL_APP_ROLES = [UserRole.HOST, UserRole.BUSINESS]
+const ALL_APP_ROLES = [UserRole.HOST, UserRole.SERVICE]
 
 export interface RoutePermission {
   path: string
@@ -40,7 +40,7 @@ export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
 
 export const getDefaultRouteForRole = (role: string): string => {
   if (role === UserRole.HOST) return '/booking-management'
-  if (role === UserRole.BUSINESS) return '/my-listing'
+  if (role === UserRole.SERVICE) return '/my-listing'
   return '/booking-management'
 }
 
@@ -60,11 +60,11 @@ export const hasRouteAccess = (userRole: string, routePath: string): boolean => 
   return false
 }
 
-/** Host + Business may see scoped data on these areas */
+/** Host vs Service (scoped) data on shared routes */
 export const shouldFilterData = (userRole: string, routePath: string): boolean => {
   const sharedRoutes = ['/cars', '/booking-management', '/calender']
   return (
-    userRole === UserRole.BUSINESS &&
+    userRole === UserRole.SERVICE &&
     sharedRoutes.some((route) => routePath.startsWith(route))
   )
 }

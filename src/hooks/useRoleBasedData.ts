@@ -8,7 +8,7 @@ interface DataItem {
   [key: string]: string | number | undefined
 }
 
-/** Host sees all rows; Business sees only its scope. */
+/** Host sees all rows; Service sees only its scope. */
 export const useRoleBasedData = <T extends DataItem>(data: T[]): T[] => {
   const { user } = useAppSelector((state) => state.auth)
 
@@ -19,7 +19,7 @@ export const useRoleBasedData = <T extends DataItem>(data: T[]): T[] => {
       return data
     }
 
-    if (user.role === UserRole.BUSINESS && user.businessId) {
+    if (user.role === UserRole.SERVICE && user.businessId) {
       return data.filter(
         (item) =>
           item.businessId === user.businessId || item.userId === user.id
@@ -41,10 +41,13 @@ export const useIsHost = (): boolean => {
   return user?.role === UserRole.HOST
 }
 
-export const useIsBusiness = (): boolean => {
+export const useIsService = (): boolean => {
   const { user } = useAppSelector((state) => state.auth)
-  return user?.role === UserRole.BUSINESS
+  return user?.role === UserRole.SERVICE
 }
+
+/** @deprecated Use useIsService */
+export const useIsBusiness = useIsService
 
 export const useBusinessId = (): string | undefined => {
   const { user } = useAppSelector((state) => state.auth)
@@ -60,7 +63,7 @@ export const useCanModifyItem = (item: DataItem): boolean => {
     return true
   }
 
-  if (user.role === UserRole.BUSINESS) {
+  if (user.role === UserRole.SERVICE) {
     return item.businessId === user.businessId || item.userId === user.id
   }
 
