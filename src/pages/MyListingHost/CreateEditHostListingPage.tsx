@@ -295,9 +295,9 @@ export default function CreateEditHostListingPage() {
                 className="border border-border/60"
                 height={320}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text text-muted-foreground">
                 Selected coordinates:{' '}
-                <span className="font-medium text-foreground">
+                <span className="font-bold text-secondary">
                   {coords
                     ? `[${coords[0].toFixed(6)}, ${coords[1].toFixed(6)}]`
                     : '—'}
