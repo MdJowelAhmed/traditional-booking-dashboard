@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,28 +9,51 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/utils/cn'
 import { motion, AnimatePresence } from 'framer-motion'
+import {
+  useResetPasswordMutation,
+  PASSWORD_RESET_VERIFY_TOKEN_KEY,
+} from '@/redux/api/authApi'
 
-const resetPasswordSchema = z.object({
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-})
+const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 
+function errorMessageFromApi(err: unknown): string {
+  if (err && typeof err === 'object' && 'status' in err) {
+    const e = err as { status?: number; data?: unknown }
+    const data = e.data as { message?: string; error?: string } | undefined
+    if (data?.message && typeof data.message === 'string') return data.message
+    if (data?.error && typeof data.error === 'string') return data.error
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong. Please try again.'
+}
+
 export default function ResetPassword() {
   const navigate = useNavigate()
-  const [isLoading, setIsLoading] = useState(false)
+  const [resetPassword, { isLoading }] = useResetPasswordMutation()
   const [isSuccess, setIsSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [missingToken, setMissingToken] = useState(false)
+
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem(PASSWORD_RESET_VERIFY_TOKEN_KEY)
+      setMissingToken(!t?.trim())
+    } catch {
+      setMissingToken(true)
+    }
+  }, [])
 
   const {
     register,
@@ -43,25 +66,43 @@ export default function ResetPassword() {
 
   const password = watch('password', '')
 
-  const passwordRequirements = [
-    { label: 'At least 8 characters', met: password.length >= 8 },
-    { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
-    { label: 'One lowercase letter', met: /[a-z]/.test(password) },
-    { label: 'One number', met: /[0-9]/.test(password) },
-  ]
+  const passwordRequirements = [{ label: 'At least 8 characters', met: password.length >= 8 }]
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    setIsLoading(true)
+    setSubmitError('')
+
+    let token: string | null = null
+    try {
+      token = localStorage.getItem(PASSWORD_RESET_VERIFY_TOKEN_KEY)
+    } catch {
+      token = null
+    }
+
+    if (!token?.trim()) {
+      setSubmitError('Your reset link expired or is missing. Request a new code from forgot password.')
+      setMissingToken(true)
+      return
+    }
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      console.log('Reset password:', data)
+      const res = await resetPassword({
+        newPassword: data.password,
+        confirmPassword: data.confirmPassword,
+      }).unwrap()
+
+      if (!res.success) {
+        setSubmitError(res.message?.trim() ? res.message : 'Could not reset password.')
+        return
+      }
+
+      try {
+        localStorage.removeItem(PASSWORD_RESET_VERIFY_TOKEN_KEY)
+      } catch {
+        /* ignore */
+      }
       setIsSuccess(true)
-    } catch {
-      // Handle error
-    } finally {
-      setIsLoading(false)
+    } catch (err) {
+      setSubmitError(errorMessageFromApi(err))
     }
   }
 
@@ -99,7 +140,19 @@ export default function ResetPassword() {
               </p>
             </div>
 
+            {missingToken && (
+              <p className="text-sm text-destructive">
+                No verification token found.{' '}
+                <Link to="/auth/forgot-password" className="underline font-medium">
+                  Start over
+                </Link>
+              </p>
+            )}
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {submitError && (
+                <p className="text-sm text-destructive text-center">{submitError}</p>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="password">New Password</Label>
                 <div className="relative">
@@ -172,7 +225,13 @@ export default function ResetPassword() {
                 )}
               </div>
 
-              <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                isLoading={isLoading}
+                disabled={missingToken}
+              >
                 {!isLoading && (
                   <>
                     Reset Password

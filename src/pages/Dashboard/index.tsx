@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react'
 import { formatCurrency, formatCompactNumber } from '@/utils/formatters'
 import { StatCard } from './StatCard'
 import { EarningsSummaryChart } from './EarningsSummaryChart'
-import { SuperAdminPlatformChart } from './SuperAdminPlatformChart'
 import { RecentBookingsCard } from './RecentBookingsCard'
 import {
   yearlyData,
@@ -30,10 +29,7 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(defaultChartYear)
 
   const chartData = useMemo(() => yearlyData[selectedYear], [selectedYear])
-  const hostPlatformChartData = useMemo(
-    () => superAdminPlatformYearlyData[selectedYear] ?? superAdminPlatformYearlyData[defaultChartYear],
-    [selectedYear]
-  )
+
 
   const stats = useMemo(() => {
     if (isHost) {
@@ -140,7 +136,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Stats Grid */}
       <div
-        className={`grid gap-4 md:grid-cols-2 ${isHost ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}
+        className={`grid gap-4 md:grid-cols-2 ${isHost ? 'lg:grid-cols-4' : 'lg:grid-cols-4'}`}
       >
         {stats.map((stat, index) => (
           <StatCard key={stat.title} {...stat} index={index} />
@@ -149,16 +145,7 @@ export default function Dashboard() {
 
       {/* Chart: full width for super admin (platform metrics); host/business keep sales + bookings */}
       <div className="grid gap-6 lg:grid-cols-12">
-        {isHost ? (
-          <div className="col-span-12">
-            <SuperAdminPlatformChart
-              chartData={hostPlatformChartData}
-              selectedYear={selectedYear}
-              onYearChange={setSelectedYear}
-            />
-          </div>
-        ) : (
-          <>
+     
             <div className="col-span-12 lg:col-span-8">
               <EarningsSummaryChart
                 chartData={chartData}
@@ -169,8 +156,8 @@ export default function Dashboard() {
             <div className="col-span-12 lg:col-span-4">
               <RecentBookingsCard />
             </div>
-          </>
-        )}
+        
+       
       </div>
 
       {/* <div>

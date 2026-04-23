@@ -29,28 +29,43 @@ export interface ChangePasswordResponse {
     statusCode?: number;
 }
 
-interface VerifyEmailPayload {
+export interface ForgotPasswordPayload {
     email: string;
-    oneTimeCode: number ;
 }
 
-interface VerifyEmailResponse {
+export interface ForgotPasswordResponse {
     success: boolean;
     message: string;
-    data: {
+    statusCode?: number;
+}
+
+export interface VerifyEmailPayload {
+    email: string;
+    oneTimeCode: number;
+}
+
+export interface VerifyEmailResponse {
+    success: boolean;
+    message: string;
+    statusCode?: number;
+    data?: {
         verifyToken: string;
     };
 }
 
-interface ResetPasswordPayload {
+export interface ResetPasswordPayload {
     newPassword: string;
     confirmPassword: string;
 }
 
-interface ResetPasswordResponse {
+export interface ResetPasswordResponse {
     success: boolean;
     message: string;
+    statusCode?: number;
 }
+
+/** localStorage key for OTP verify token used by `/auth/reset-password`. */
+export const PASSWORD_RESET_VERIFY_TOKEN_KEY = 'verifyToken';
 
 /** User document from GET/PATCH /users/profile */
 export interface MyProfileEntity {
@@ -154,11 +169,11 @@ const authApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['Auth'],
         }),
-        forgotPassword: builder.mutation({
-            query: (credentials) => ({
+        forgotPassword: builder.mutation<ForgotPasswordResponse, ForgotPasswordPayload>({
+            query: ({ email }) => ({
                 url: '/auth/forget-password',
                 method: 'POST',
-                body: credentials,
+                body: { email: email.trim() },
             }),
             invalidatesTags: ['Auth'],
         }),
@@ -171,55 +186,34 @@ const authApi = baseApi.injectEndpoints({
             invalidatesTags: ['Auth'],
         }),
         verifyEmail: builder.mutation<VerifyEmailResponse, VerifyEmailPayload>({
-            query: (credentials) => ({
+            query: ({ email, oneTimeCode }) => ({
                 url: '/auth/verify-otp',
                 method: 'POST',
-                body: credentials,
+                body: { email: email.trim(), oneTimeCode },
             }),
-            async onQueryStarted(_arg, { queryFulfilled }) {
-                try {
-                    const { data } = await queryFulfilled;
-                    const token = data?.data?.verifyToken;
-                    // Safely store verifyToken into localStorage for reset-password
-                    if (token) {
-                        try {
-                            if (typeof localStorage !== 'undefined') {
-                                localStorage.setItem('verifyToken', token);
-                            }
-                        } catch {
-                            // ignore storage errors
-                        }
-                    }
-                } catch {
-                    // ignore errors; normal RTK Query error handling will apply
-                }
-            },
             invalidatesTags: ['Auth'],
         }),
         resetPassword: builder.mutation<ResetPasswordResponse, ResetPasswordPayload>({
-            query: (credentials) => {
-                // Read verifyToken that was returned from verify-email
+            query: (body) => {
                 let verifyToken: string | null = null;
                 try {
-                    verifyToken = typeof localStorage !== 'undefined'
-                        ? localStorage.getItem('verifyToken')
-                        : null;
+                    verifyToken =
+                        typeof localStorage !== 'undefined'
+                            ? localStorage.getItem(PASSWORD_RESET_VERIFY_TOKEN_KEY)
+                            : null;
                 } catch {
                     verifyToken = null;
                 }
 
                 const headers: Record<string, string> = {};
                 if (verifyToken) {
-                    // Backend expects verifyToken in headers during reset
-                    // Send both forms for compatibility.
-                    headers.Token = verifyToken;
-                    headers.Authorization = `Bearer ${verifyToken}`;
+                    headers.token = verifyToken;
                 }
 
                 return {
                     url: '/auth/reset-password',
                     method: 'POST',
-                    body: credentials,
+                    body,
                     headers,
                 };
             },

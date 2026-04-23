@@ -6,8 +6,24 @@ import { Input } from '@/components/ui/input'
 import { useAppSelector } from '@/redux/hooks'
 import { cn } from '@/utils/cn'
 import { motion } from 'framer-motion'
+import {
+  useForgotPasswordMutation,
+  useVerifyEmailMutation,
+  PASSWORD_RESET_VERIFY_TOKEN_KEY,
+} from '@/redux/api/authApi'
 
-const OTP_LENGTH = 6
+const OTP_LENGTH = 4
+
+function errorMessageFromApi(err: unknown): string {
+  if (err && typeof err === 'object' && 'status' in err) {
+    const e = err as { status?: number; data?: unknown }
+    const data = e.data as { message?: string; error?: string } | undefined
+    if (data?.message && typeof data.message === 'string') return data.message
+    if (data?.error && typeof data.error === 'string') return data.error
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong. Please try again.'
+}
 
 export default function VerifyEmail() {
   const navigate = useNavigate()
@@ -17,8 +33,10 @@ export default function VerifyEmail() {
   const isPasswordReset = location.state?.type === 'reset'
   const email = isPasswordReset ? passwordResetEmail : verificationEmail
 
+  const [verifyEmail, { isLoading: isVerifying }] = useVerifyEmailMutation()
+  const [forgotPassword, { isLoading: isResending }] = useForgotPasswordMutation()
+
   const [otp, setOtp] = useState<string[]>(new Array(OTP_LENGTH).fill(''))
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [resendTimer, setResendTimer] = useState(30)
   
@@ -79,33 +97,72 @@ export default function VerifyEmail() {
       return
     }
 
-    setIsLoading(true)
+    if (!email?.trim()) {
+      setError('Missing email. Go back and try again.')
+      return
+    }
+
+    setError('')
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Mock verification - accept any 6-digit code
-      if (code === '123456' || code.length === 6) {
-        if (isPasswordReset) {
-          navigate('/auth/reset-password')
-        } else {
-          navigate('/auth/login', { state: { verified: true } })
-        }
-      } else {
+      const oneTimeCode = parseInt(code, 10)
+      if (Number.isNaN(oneTimeCode)) {
         setError('Invalid verification code')
+        return
       }
-    } catch {
-      setError('An error occurred. Please try again.')
-    } finally {
-      setIsLoading(false)
+
+      const res = await verifyEmail({
+        email: email.trim(),
+        oneTimeCode,
+      }).unwrap()
+
+      if (!res.success) {
+        setError(res.message?.trim() ? res.message : 'Verification failed.')
+        return
+      }
+
+      if (isPasswordReset) {
+        const verifyToken = res.data?.verifyToken
+        if (!verifyToken) {
+          setError('Missing reset token from server. Please try again.')
+          return
+        }
+        try {
+          localStorage.setItem(PASSWORD_RESET_VERIFY_TOKEN_KEY, verifyToken)
+        } catch {
+          setError('Could not save session. Check browser storage settings.')
+          return
+        }
+        navigate('/auth/reset-password')
+      } else {
+        navigate('/auth/login', { state: { verified: true } })
+      }
+    } catch (err) {
+      setError(errorMessageFromApi(err))
     }
   }
 
   const handleResend = async () => {
+    if (!email?.trim()) {
+      setError('Missing email. Go back and try again.')
+      return
+    }
+
     setResendTimer(30)
-    // Simulate resending code
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    setError('')
+
+    try {
+      if (isPasswordReset) {
+        const res = await forgotPassword({ email: email.trim() }).unwrap()
+        if (!res.success) {
+          setError(res.message?.trim() ? res.message : 'Could not resend code.')
+        }
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 300))
+      }
+    } catch (err) {
+      setError(errorMessageFromApi(err))
+    }
   }
 
   return (
@@ -132,7 +189,7 @@ export default function VerifyEmail() {
         </div>
         <h1 className="text-2xl font-bold tracking-tight">Verify your email</h1>
         <p className="text-muted-foreground">
-          We sent a 6-digit code to
+          We sent a 4-digit code to
         </p>
         <p className="font-medium">{email || 'your email'}</p>
       </div>
@@ -168,8 +225,8 @@ export default function VerifyEmail() {
           ))}
         </div>
 
-        <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
-          {!isLoading && (
+        <Button type="submit" className="w-full" size="lg" isLoading={isVerifying}>
+          {!isVerifying && (
             <>
               Verify
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -187,18 +244,15 @@ export default function VerifyEmail() {
             </span>
           ) : (
             <button
+              type="button"
               onClick={handleResend}
-              className="text-primary font-medium hover:underline"
+              disabled={isResending}
+              className="text-primary font-medium hover:underline disabled:opacity-50"
             >
-              Click to resend
+              {isResending ? 'Sending…' : 'Click to resend'}
             </button>
           )}
         </p>
-      </div>
-
-      <div className="p-4 rounded-lg bg-muted/50 border text-sm text-center">
-        <p className="text-muted-foreground">Demo: Enter any 6-digit code or use</p>
-        <p className="font-mono font-medium">123456</p>
       </div>
     </div>
   )

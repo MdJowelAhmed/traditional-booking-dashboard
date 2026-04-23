@@ -73,36 +73,36 @@ const navItems: NavItem[] = [
   //   icon: CreditCard,
   //   allowedRoles: [UserRole.HOST], // Host only
   // },
-  {
-    title: 'Controller',
-    href: '/controller',
-    icon: Gamepad2,
-    allowedRoles: [UserRole.HOST],
-  },
+  // {
+  //   title: 'Controller',
+  //   href: '/controller',
+  //   icon: Gamepad2,
+  //   allowedRoles: [UserRole.HOST],
+  // },
   {
     title: 'Reviews & Ratings',
     href: '/reviews-ratings',
     icon: Star,
     allowedRoles: [ UserRole.HOST, UserRole.SERVICE],
   },
-  {
-    title: 'App Slider',
-    href: '/app-slider',
-    icon: ImageIcon,
-    allowedRoles: [UserRole.HOST],
-  },
-  {
-    title: 'Subscription Package',
-    href: '/subscription-packages',
-    icon: Package,
-    allowedRoles: [UserRole.HOST],
-  },
-  {
-    title: 'Subscription',
-    href: '/subscription',
-    icon: Crown,
-    allowedRoles: [UserRole.HOST, UserRole.SERVICE],
-  },
+  // {
+  //   title: 'App Slider',
+  //   href: '/app-slider',
+  //   icon: ImageIcon,
+  //   allowedRoles: [UserRole.HOST],
+  // },
+  // {
+  //   title: 'Subscription Package',
+  //   href: '/subscription-packages',
+  //   icon: Package,
+  //   allowedRoles: [UserRole.HOST],
+  // },
+  // {
+  //   title: 'Subscription',
+  //   href: '/subscription',
+  //   icon: Crown,
+  //   allowedRoles: [UserRole.HOST, UserRole.SERVICE],
+  // },
   {
     title: 'Support',
     href: '/support',

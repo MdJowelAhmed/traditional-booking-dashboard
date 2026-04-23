@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAppDispatch } from '@/redux/hooks'
 import { setPasswordResetEmail } from '@/redux/slices/authSlice'
+import { useForgotPasswordMutation } from '@/redux/api/authApi'
 import { cn } from '@/utils/cn'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -18,12 +19,24 @@ const forgotPasswordSchema = z.object({
 
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 
+function errorMessageFromApi(err: unknown): string {
+  if (err && typeof err === 'object' && 'status' in err) {
+    const e = err as { status?: number; data?: unknown }
+    const data = e.data as { message?: string; error?: string } | undefined
+    if (data?.message && typeof data.message === 'string') return data.message
+    if (data?.error && typeof data.error === 'string') return data.error
+  }
+  if (err instanceof Error) return err.message
+  return 'Something went wrong. Please try again.'
+}
+
 export default function ForgotPassword() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const [isLoading, setIsLoading] = useState(false)
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation()
   const [isSuccess, setIsSuccess] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState('')
+  const [submitError, setSubmitError] = useState('')
 
   const {
     register,
@@ -34,19 +47,21 @@ export default function ForgotPassword() {
   })
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
-    setIsLoading(true)
+    setSubmitError('')
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const res = await forgotPassword({ email: data.email.trim() }).unwrap()
 
-      dispatch(setPasswordResetEmail(data.email))
-      setSubmittedEmail(data.email)
+      if (!res.success) {
+        setSubmitError(res.message?.trim() ? res.message : 'Could not send reset instructions.')
+        return
+      }
+
+      dispatch(setPasswordResetEmail(data.email.trim()))
+      setSubmittedEmail(data.email.trim())
       setIsSuccess(true)
-    } catch {
-      // Handle error
-    } finally {
-      setIsLoading(false)
+    } catch (err) {
+      setSubmitError(errorMessageFromApi(err))
     }
   }
 
@@ -89,6 +104,9 @@ export default function ForgotPassword() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {submitError && (
+                <p className="text-sm text-destructive text-center">{submitError}</p>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
