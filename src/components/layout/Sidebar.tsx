@@ -12,10 +12,6 @@ import {
  
   Star,
   LifeBuoy,
-  ImageIcon,
-  Crown,
-  Gamepad2,
-  Package,
   ListChecksIcon,
   LogOut,
 } from 'lucide-react'

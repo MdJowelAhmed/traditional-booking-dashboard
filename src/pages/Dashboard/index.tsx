@@ -5,7 +5,6 @@ import { EarningsSummaryChart } from './EarningsSummaryChart'
 import { RecentBookingsCard } from './RecentBookingsCard'
 import {
   yearlyData,
-  superAdminPlatformYearlyData,
   superAdminDashboardStats,
   defaultChartYear,
 } from './dashboardData'

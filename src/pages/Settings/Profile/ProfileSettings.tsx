@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Building2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -145,7 +144,6 @@ export default function ProfileSettings() {
   }
 
   const ownerImageUrl = resolveApiMediaUrl(owner?.image)
-  const businessImageUrl = resolveApiMediaUrl(business?.image)
   const ownerInitials = (owner?.name ?? '?')
     .split(/\s+/)
     .map((p) => p[0])

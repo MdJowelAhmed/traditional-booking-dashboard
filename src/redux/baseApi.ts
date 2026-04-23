@@ -31,6 +31,8 @@ export const baseApi = createApi({
     'ServiceLocation',
     'AppSlider',
     'Controller',
+    'Chat',
+    'Message',
   ],
   endpoints: () => ({}),
 })
