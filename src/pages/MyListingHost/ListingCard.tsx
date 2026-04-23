@@ -9,9 +9,10 @@ import type { PropertyApiDoc } from '@/redux/api/hostMyListingApi'
 interface ListingCardProps {
   listing: PropertyApiDoc
   onDelete: (listing: PropertyApiDoc) => void
+  onView: (listing: PropertyApiDoc) => void
 }
 
-export function ListingCard({ listing, onDelete }: ListingCardProps) {
+export function ListingCard({ listing, onDelete, onView }: ListingCardProps) {
   const navigate = useNavigate()
   const firstImage = listing.images?.[0]
   const statusText = listing.isActive ? 'Active' : 'Inactive'
@@ -47,6 +48,14 @@ export function ListingCard({ listing, onDelete }: ListingCardProps) {
           </span>
         </div>
         <div className="mt-auto flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1 rounded-full border-2 border-[#0C5822]/30 bg-white text-[#0C5822] hover:bg-[#EEF7F0]"
+            onClick={() => onView(listing)}
+          >
+            View
+          </Button>
           <Button
             type="button"
             variant="outline"

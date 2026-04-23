@@ -13,6 +13,7 @@ import {
   useDeleteMyHostListingMutation,
   useGetAllMyHostListQuery,
 } from '@/redux/api/hostMyListingApi'
+import { PropertyDetailsModal } from './PropertyDetailsModal'
 
 export default function MyListingHostPage() {
   const navigate = useNavigate()
@@ -21,6 +22,7 @@ export default function MyListingHostPage() {
   const [page, setPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGINATION.limit)
   const [deleteTarget, setDeleteTarget] = useState<PropertyApiDoc | null>(null)
+  const [detailsTarget, setDetailsTarget] = useState<PropertyApiDoc | null>(null)
 
   const { data, isLoading } = useGetAllMyHostListQuery({
     page,
@@ -99,6 +101,7 @@ export default function MyListingHostPage() {
             key={listing._id}
             listing={listing}
             onDelete={setDeleteTarget}
+            onView={setDetailsTarget}
           />
         ))}
       </div>
@@ -136,6 +139,12 @@ export default function MyListingHostPage() {
         confirmText="Delete"
         variant="danger"
         isLoading={isDeleting}
+      />
+
+      <PropertyDetailsModal
+        open={!!detailsTarget}
+        onClose={() => setDetailsTarget(null)}
+        listing={detailsTarget}
       />
 
     </div>
