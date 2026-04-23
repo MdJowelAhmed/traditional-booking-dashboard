@@ -45,11 +45,16 @@ const navItems: NavItem[] = [
 
   {
     title: 'My Listing',
-    href: '/my-listing',
+    href: '/my-host-listing',
     icon: ListChecksIcon,
-    allowedRoles: [ UserRole.HOST, UserRole.SERVICE],
+    allowedRoles: [ UserRole.HOST],
   },
-  
+  {
+    title: 'My Listing',
+    href: '/my-service-listing',
+    icon: ListChecksIcon,
+    allowedRoles: [  UserRole.SERVICE],
+  },
   {
     title: 'Booking Management',
     href: '/booking-management',

@@ -43,8 +43,10 @@ import SubscriptionPackagePage from './pages/SubscriptionPackage/SubscriptionPac
 import Support from './pages/Support/Support'
 import FAQ from './pages/FAQ/FAQ'
 import NotFound from './pages/NotFound/NotFound'
-import MyListingPage from './pages/MyListing/MyListingPage'
-import { MyListingEditPage, MyListingNewPage } from './pages/MyListing/MyListingFormRoutes'
+import MyListingPage from './pages/MyListingHost/MyListingPage'
+import { MyListingEditPage, MyListingNewPage } from './pages/MyListingHost/MyListingFormRoutes'
+import MyListingServicePage from './pages/MyListingService/MyListingPage'
+import CreateEditServiceListingPage from './pages/MyListingService/CreateEditServiceListingPage'
 
 // Component to redirect based on user role
 function RoleBasedRedirect() {
@@ -214,26 +216,51 @@ function App() {
           />
 
           <Route
-            path="my-listing/new"
+            path="my-host-listing/new"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST,]}>
                 <MyListingNewPage />
               </RoleBasedRoute>
             }
           />
+          
           <Route
-            path="my-listing/:id/edit"
+            path="my-host-listing/:id/edit"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
+              <RoleBasedRoute allowedRoles={[ UserRole.HOST]}>
                 <MyListingEditPage />
               </RoleBasedRoute>
             }
           />
           <Route
-            path="my-listing"
+            path="my-host-listing"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.HOST, UserRole.SERVICE]}>
+              <RoleBasedRoute allowedRoles={[UserRole.HOST]}>
                 <MyListingPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="my-service-listing"
+            element={
+              <RoleBasedRoute allowedRoles={[ UserRole.SERVICE]}>
+                <MyListingServicePage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="my-service-listing/:id/edit"
+            element={
+              <RoleBasedRoute allowedRoles={[ UserRole.SERVICE]}>
+                <CreateEditServiceListingPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="my-service-listing/new"
+            element={
+              <RoleBasedRoute allowedRoles={[ UserRole.SERVICE]}>
+                <CreateEditServiceListingPage />
               </RoleBasedRoute>
             }
           />

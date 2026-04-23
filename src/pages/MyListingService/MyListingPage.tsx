@@ -12,7 +12,7 @@ import type { MyListing } from '@/types/myListing'
 import { ListingCard } from './ListingCard'
 import { DEFAULT_PAGINATION } from '@/utils/constants'
 
-export default function MyListingPage() {
+export default function MyListingServicePage() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const items = useAppSelector((s) => s.myListings.items)
@@ -49,22 +49,18 @@ export default function MyListingPage() {
 
   return (
     <div className="space-y-6 bg-white p-8 rounded-2xl">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between" />
 
-
-      </div>
-
-      <div className='flex items-center gap-4 justify-between'>
-
+      <div className="flex items-center gap-4 justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#2d2d2d] md:text-3xl">
-            My Listing
+            My Service Listing
           </h1>
           <p className="mt-1 text-sm text-muted-foreground md:text-base">
-            Manage your properties &amp; their availability
+            Manage your service listings &amp; their availability
           </p>
         </div>
-        <div className='flex items-center gap-4'>
+        <div className="flex items-center gap-4">
           <SearchInput
             value={search}
             onChange={(v) => {
@@ -77,21 +73,17 @@ export default function MyListingPage() {
           <Button
             type="button"
             className="w-full rounded-md bg-[#22C55E] px-6 text-white hover:bg-[#16A34A] lg:w-auto shrink-0"
-            onClick={() => navigate('/my-listing/new')}
+            onClick={() => navigate('/my-service-listing/new')}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Create Listing
+            Create Service Listing
           </Button>
         </div>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {pageItems.map((listing) => (
-          <ListingCard
-            key={listing.id}
-            listing={listing}
-            onDelete={setDeleteTarget}
-          />
+          <ListingCard key={listing.id} listing={listing} onDelete={setDeleteTarget} />
         ))}
       </div>
 
@@ -128,7 +120,7 @@ export default function MyListingPage() {
         confirmText="Delete"
         variant="danger"
       />
-
     </div>
   )
 }
+
