@@ -14,6 +14,7 @@ import {
   LifeBuoy,
   ListChecksIcon,
   LogOut,
+  Crown,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -98,12 +99,12 @@ const navItems: NavItem[] = [
   //   icon: Package,
   //   allowedRoles: [UserRole.HOST],
   // },
-  // {
-  //   title: 'Subscription',
-  //   href: '/subscription',
-  //   icon: Crown,
-  //   allowedRoles: [UserRole.HOST, UserRole.SERVICE],
-  // },
+  {
+    title: 'Subscription',
+    href: '/subscription',
+    icon: Crown,
+    allowedRoles: [UserRole.HOST, UserRole.SERVICE],
+  },
   {
     title: 'Support',
     href: '/support',

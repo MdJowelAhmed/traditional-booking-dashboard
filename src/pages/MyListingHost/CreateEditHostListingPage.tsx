@@ -1,30 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Minus, Plus } from 'lucide-react'
 import { FormInput } from '@/components/common/Form/FormInput'
 import { FormTextarea } from '@/components/common/Form/FormTextarea'
 import { FormSelect } from '@/components/common/Form/FormSelect'
-import { ImageUploader } from '@/components/common/ImageUploader'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
-import { addMyListing, updateMyListing } from '@/redux/slices/myListingSlice'
 import { toast } from '@/utils/toast'
-import type { MyListing } from '@/types/myListing'
 import { MAX_IMAGE_SIZE } from '@/utils/constants'
 import { formatFileSize } from '@/utils/formatters'
-
-const PROPERTY_TYPES = [
-  { value: 'garage', label: 'Garage' },
-  { value: 'house', label: 'House' },
-  { value: 'villa', label: 'Villa' },
-  { value: 'apartment', label: 'Apartment' },
-  { value: 'office', label: 'Office' },
-  { value: 'warehouse', label: 'Warehouse' },
-  { value: 'other', label: 'Other' },
-]
+import { MultiImageUploader } from '@/components/common/MultiImageUploader'
+import { GoogleMapPicker, type LngLat } from '@/components/common/GoogleMapPicker'
+import {
+  useCreateMyHostListingMutation,
+  useGetAllMyHostListQuery,
+  useUpdateMyHostListingMutation,
+} from '@/redux/api/hostMyListingApi'
+import { useGetCategoriesQuery } from '@/redux/api/categoryApi'
 
 const PRICE_UNITS = [
   { value: 'per_month', label: 'Per Month' },
@@ -33,99 +28,42 @@ const PRICE_UNITS = [
   { value: 'per_hour', label: 'Per Hour' },
 ]
 
-const BED_BATH_OPTIONS = Array.from({ length: 12 }, (_, i) => {
-  const n = String(i + 1).padStart(2, '0')
-  return { value: n, label: n }
-})
-
-export function isHostResidentialPropertyType(propertyType: string): boolean {
-  return ['house', 'villa', 'apartment'].includes(propertyType)
-}
-
 const hostFormSchema = z
   .object({
-    propertyType: z.string().min(1, 'Property type is required'),
-    title: z.string().min(1, 'Title is required'),
-    sizeSqft: z.string().optional(),
-    bedrooms: z.string().optional(),
-    bathrooms: z.string().optional(),
+    name: z.string().min(1, 'Property name is required'),
+    categoryId: z.string().min(1, 'Category is required'),
+    size: z.coerce.number().positive('Enter a valid size'),
     price: z.coerce.number().positive('Enter a valid price'),
     priceUnit: z.string().min(1, 'Price unit is required'),
-    location: z.string().min(1, 'Location is required'),
     address: z.string().min(1, 'Address is required'),
-    facilities: z.string().min(1, 'Facilities are required'),
+    facilities: z
+      .array(z.object({ value: z.string().min(1, 'Required') }))
+      .min(1, 'Add at least one facility'),
     description: z.string().min(1, 'Description is required'),
-  })
-  .superRefine((data, ctx) => {
-    if (isHostResidentialPropertyType(data.propertyType)) {
-      if (!data.bedrooms?.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Number of beds is required',
-          path: ['bedrooms'],
-        })
-      }
-      if (!data.bathrooms?.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Bathroom count is required',
-          path: ['bathrooms'],
-        })
-      }
-    } else if (!data.sizeSqft?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Size is required',
-        path: ['sizeSqft'],
-      })
-    }
   })
 
 type HostFormValues = z.infer<typeof hostFormSchema>
 
-const DEFAULT_PLACEHOLDER_IMAGE =
-  'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&q=80'
-
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
-function scheduleFromExisting(existing: MyListing | undefined) {
-  if (existing?.scheduleBasis === 'hourly' && existing.hourlySchedule) {
-    return {
-      scheduleBasis: 'hourly' as const,
-      dailySchedule: undefined,
-      hourlySchedule: existing.hourlySchedule,
-    }
-  }
-  if (existing?.dailySchedule) {
-    return {
-      scheduleBasis: 'daily' as const,
-      dailySchedule: existing.dailySchedule,
-      hourlySchedule: undefined,
-    }
-  }
-  return {
-    scheduleBasis: 'daily' as const,
-    dailySchedule: { selectedDays: ['all'] },
-    hourlySchedule: undefined,
-  }
-}
-
 export default function CreateEditHostListingPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const items = useAppSelector((s) => s.myListings.items)
-  const existing = id ? items.find((x) => x.id === id) : undefined
-  const isEdit = Boolean(existing)
 
-  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [images, setImages] = useState<Array<string | File>>([])
+  const [coords, setCoords] = useState<LngLat | null>(null)
+
+  const { data: listData } = useGetAllMyHostListQuery({ page: 1, limit: 200 })
+  const { data: categoryData, isLoading: isCategoryLoading } =
+    useGetCategoriesQuery({ type: 'category' })
+  const existing = useMemo(() => {
+    if (!id) return undefined
+    return listData?.data?.find((x) => x._id === id)
+  }, [id, listData?.data])
+  const isEdit = Boolean(id)
+
+  const [createListing, { isLoading: isCreating }] =
+    useCreateMyHostListingMutation()
+  const [updateListing, { isLoading: isUpdating }] =
+    useUpdateMyHostListingMutation()
 
   const {
     register,
@@ -133,127 +71,125 @@ export default function CreateEditHostListingPage() {
     reset,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<HostFormValues>({
     resolver: zodResolver(hostFormSchema),
     defaultValues: {
-      propertyType: 'garage',
-      title: '',
-      sizeSqft: '',
-      bedrooms: '01',
-      bathrooms: '01',
+      name: '',
+      categoryId: '',
+      size: 0,
       price: 0,
       priceUnit: 'per_month',
-      location: '',
       address: '',
-      facilities: '',
+      facilities: [{ value: '' }],
       description: '',
     },
   })
 
-  const propertyType = watch('propertyType')
+  const facilitiesArray = useFieldArray({
+    control,
+    name: 'facilities',
+  })
+
   const priceUnit = watch('priceUnit')
-  const bedrooms = watch('bedrooms')
-  const bathrooms = watch('bathrooms')
-  const isResidential = isHostResidentialPropertyType(propertyType || '')
+  const categoryId = watch('categoryId')
+  const facilities = watch('facilities')
+
+  const categoryOptions = useMemo(() => {
+    const items = categoryData?.data ?? []
+    return items
+      .filter((x) => x.type === 'category')
+      .map((x) => ({ value: x._id, label: x.name }))
+  }, [categoryData?.data])
 
   useEffect(() => {
-    setImageFile(null)
     if (existing) {
+      setImages(existing.images ?? [])
+      const c = existing.location?.coordinates
+      setCoords(c?.length === 2 ? [c[0], c[1]] : null)
       reset({
-        propertyType: existing.propertyType || 'garage',
-        title: existing.title,
-        sizeSqft: existing.sizeSqft ?? '',
-        bedrooms: existing.bedrooms ?? '01',
-        bathrooms: existing.bathrooms ?? '01',
-        price: existing.price,
-        priceUnit: existing.priceUnit || 'per_month',
-        location: existing.location ?? '',
+        name: existing.name ?? '',
+        categoryId: existing.categoryId ?? '',
+        size: existing.size ?? 0,
+        price: existing.price ?? 0,
+        priceUnit: existing.priceUnit ?? 'per_month',
         address: existing.address ?? '',
-        facilities: existing.facilities ?? '',
-        description: existing.description,
+        facilities:
+          (existing.facilities ?? []).length > 0
+            ? (existing.facilities ?? []).map((v) => ({ value: v }))
+            : [{ value: '' }],
+        description: existing.description ?? '',
       })
     } else {
+      setImages([])
+      setCoords(null)
       reset({
-        propertyType: 'garage',
-        title: '',
-        sizeSqft: '',
-        bedrooms: '01',
-        bathrooms: '01',
+        name: '',
+        categoryId: '',
+        size: 0,
         price: 0,
         priceUnit: 'per_month',
-        location: '',
         address: '',
-        facilities: '',
+        facilities: [{ value: '' }],
         description: '',
       })
     }
   }, [existing, reset, id])
 
   useEffect(() => {
-    if (isEdit && id && !existing) {
+    if (id && !existing && listData?.data) {
       toast({ title: 'Listing not found', variant: 'destructive' })
-      navigate('/my-listing')
+      navigate('/my-host-listing')
     }
-  }, [isEdit, id, existing, navigate])
-
-  const titlePlaceholder = isResidential ? 'Apartment' : 'Garage'
+  }, [existing, id, listData?.data, navigate])
 
   const onSubmit = async (data: HostFormValues) => {
-    const existingUrl = existing?.imageUrl
-    if (!imageFile && !existingUrl) {
+    if (!images.length) {
       toast({
         variant: 'destructive',
-        title: 'Please upload a property photo',
+        title: 'Please upload at least one property photo',
+      })
+      return
+    }
+    if (!coords) {
+      toast({
+        variant: 'destructive',
+        title: 'Please select a location on the map',
       })
       return
     }
 
-    let imageUrl = existingUrl ?? DEFAULT_PLACEHOLDER_IMAGE
-    if (imageFile) {
-      try {
-        imageUrl = await fileToDataUrl(imageFile)
-      } catch {
-        toast({ title: 'Could not read image file', variant: 'destructive' })
-        return
-      }
-    }
-
-    const { scheduleBasis, dailySchedule, hourlySchedule } =
-      scheduleFromExisting(existing)
-
-    const residential = isHostResidentialPropertyType(data.propertyType)
-
-    const payload: MyListing = {
-      id: existing?.id ?? '',
-      title: data.title.trim(),
+    const payload = {
+      name: data.name.trim(),
+      categoryId: data.categoryId.trim(),
+      size: data.size,
       price: data.price,
-      discountPrice: existing?.discountPrice ?? 0,
-      description: data.description.trim(),
-      imageUrl,
-      rating: existing?.rating ?? 5,
-      status: existing?.status ?? 'active',
-      scheduleBasis,
-      dailySchedule,
-      hourlySchedule,
-      propertyType: data.propertyType,
       priceUnit: data.priceUnit,
-      location: data.location.trim(),
+      location: { type: 'Point' as const, coordinates: coords },
       address: data.address.trim(),
-      facilities: data.facilities.trim(),
-      sizeSqft: residential ? undefined : data.sizeSqft?.trim(),
-      bedrooms: residential ? data.bedrooms?.trim() : undefined,
-      bathrooms: residential ? data.bathrooms?.trim() : undefined,
+      facilities: data.facilities.map((x) => x.value.trim()).filter(Boolean),
+      description: data.description.trim(),
     }
 
-    if (isEdit && existing) {
-      dispatch(updateMyListing({ ...payload, id: existing.id }))
-      toast({ title: 'Listing updated', variant: 'success' })
-    } else {
-      dispatch(addMyListing({ ...payload, id: '' }))
-      toast({ title: 'Listing created', variant: 'success' })
+    const fd = new FormData()
+    fd.append('data', JSON.stringify(payload))
+    images.forEach((img) => {
+      if (typeof img !== 'string') fd.append('images', img)
+    })
+
+    try {
+      if (id) {
+        await updateListing({ id, body: fd }).unwrap()
+        toast({ title: 'Listing updated', variant: 'success' })
+      } else {
+        await createListing(fd).unwrap()
+        toast({ title: 'Listing created', variant: 'success' })
+      }
+      navigate('/my-host-listing')
+    } catch {
+      toast({ title: 'Could not save listing', variant: 'destructive' })
     }
-    navigate('/my-listing')
   }
 
   return (
@@ -274,9 +210,9 @@ export default function CreateEditHostListingPage() {
           <Label className="text-base font-medium text-[#2d2d2d]">
             Property Photos
           </Label>
-          <ImageUploader
-            value={imageFile ?? existing?.imageUrl ?? null}
-            onChange={setImageFile}
+          <MultiImageUploader
+            value={images}
+            onChange={setImages}
             maxSize={MAX_IMAGE_SIZE}
             emptyTitle="Upload Photos"
             emptyDescription={
@@ -287,7 +223,7 @@ export default function CreateEditHostListingPage() {
                 </span>
               </p>
             }
-            className="max-w-lg"
+            className="max-w-3xl"
           />
         </div>
 
@@ -297,61 +233,36 @@ export default function CreateEditHostListingPage() {
           </h2>
 
           <div className="[&_button]:bg-[#EBEBEB] space-y-5">
-            <FormSelect
-              label="Property Type"
-              name="propertyType"
-              value={propertyType || 'garage'}
-              options={PROPERTY_TYPES}
-              onChange={(v) =>
-                setValue('propertyType', v, { shouldValidate: true })
-              }
-              placeholder="Select type"
-              required
-              error={errors.propertyType?.message}
-            />
-
             <FormInput
-              label="Title"
-              placeholder={titlePlaceholder}
+              label="Property Name"
+              placeholder="e.g., Modern Apartment in Mohakhali"
               required
-              {...register('title')}
-              error={errors.title?.message}
+              {...register('name')}
+              error={errors.name?.message}
             />
 
-            {isResidential ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormSelect
-                  label="Number Of Bed"
-                  name="bedrooms"
-                  value={bedrooms || '01'}
-                  options={BED_BATH_OPTIONS}
-                  onChange={(v) =>
-                    setValue('bedrooms', v, { shouldValidate: true })
-                  }
-                  required
-                  error={errors.bedrooms?.message}
-                />
-                <FormSelect
-                  label="Bathroom"
-                  name="bathrooms"
-                  value={bathrooms || '01'}
-                  options={BED_BATH_OPTIONS}
-                  onChange={(v) =>
-                    setValue('bathrooms', v, { shouldValidate: true })
-                  }
-                  required
-                  error={errors.bathrooms?.message}
-                />
-              </div>
-            ) : (
-              <FormInput
-                label="Size (Sqft)"
-                placeholder="e.g., 360 sqft"
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormSelect
+                label="Category"
+                name="categoryId"
+                value={categoryId || ''}
+                options={categoryOptions}
+                onChange={(v) => setValue('categoryId', v, { shouldValidate: true })}
+                placeholder={isCategoryLoading ? 'Loading…' : 'Select category'}
                 required
-                {...register('sizeSqft')}
-                error={errors.sizeSqft?.message}
+                disabled={isCategoryLoading}
+                error={errors.categoryId?.message}
               />
-            )}
+              <FormInput
+                label="Size"
+                type="number"
+                step="1"
+                placeholder="e.g., 1200"
+                required
+                {...register('size')}
+                error={errors.size?.message}
+              />
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <FormInput
@@ -376,13 +287,23 @@ export default function CreateEditHostListingPage() {
               />
             </div>
 
-            <FormInput
-              label="Location"
-              placeholder="e.g., Downtown, City Center"
-              required
-              {...register('location')}
-              error={errors.location?.message}
-            />
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Pick Location on Map</Label>
+              <GoogleMapPicker
+                value={coords}
+                onChange={setCoords}
+                className="border border-border/60"
+                height={320}
+              />
+              <p className="text-xs text-muted-foreground">
+                Selected coordinates:{' '}
+                <span className="font-medium text-foreground">
+                  {coords
+                    ? `[${coords[0].toFixed(6)}, ${coords[1].toFixed(6)}]`
+                    : '—'}
+                </span>
+              </p>
+            </div>
 
             <FormInput
               label="Address"
@@ -392,13 +313,61 @@ export default function CreateEditHostListingPage() {
               error={errors.address?.message}
             />
 
-            <FormInput
-              label="Facilities (Comma Separated)"
-              placeholder="e.g., Wifi, Parking, Air Conditioning, Pet Friendly"
-              required
-              {...register('facilities')}
-              error={errors.facilities?.message}
-            />
+            <div className="space-y-2">
+              <Label className={errors.facilities ? 'text-destructive' : undefined}>
+                Facilities
+                <span className="text-destructive ml-1">*</span>
+              </Label>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {(facilities ?? []).map((_, idx) => {
+                  const canRemove = (facilities?.length ?? 0) > 1
+                  return (
+                    <div key={idx} className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <FormInput
+                          placeholder="e.g., WiFi"
+                          {...register(`facilities.${idx}.value`)}
+                          error={
+                            errors.facilities?.[idx]?.value?.message as
+                              | string
+                              | undefined
+                          }
+                        />
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 shrink-0"
+                        onClick={() => facilitiesArray.append({ value: '' })}
+                        aria-label="Add facility"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+
+                      {canRemove && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-10 w-10 shrink-0"
+                          onClick={() => facilitiesArray.remove(idx)}
+                          aria-label="Remove facility"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {typeof errors.facilities?.message === 'string' && (
+                <p className="text-xs text-destructive">{errors.facilities.message}</p>
+              )}
+            </div>
 
             <FormTextarea
               label="Description"
@@ -415,8 +384,9 @@ export default function CreateEditHostListingPage() {
           <Button
             type="submit"
             className="w-full max-w-md rounded-xl bg-[#76B52F] py-6 text-base font-semibold text-white hover:bg-[#659928]"
+            disabled={isCreating || isUpdating}
           >
-            Save Changes
+            {isCreating || isUpdating ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </form>
