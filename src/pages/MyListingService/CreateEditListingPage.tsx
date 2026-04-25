@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,26 +9,28 @@ import { Label } from '@/components/ui/label'
 import { FormInput } from '@/components/common/Form/FormInput'
 import { FormTextarea } from '@/components/common/Form/FormTextarea'
 import { FormSelect } from '@/components/common/Form/FormSelect'
-import { ImageUploader } from '@/components/common/ImageUploader'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
-import { addMyListing, updateMyListing } from '@/redux/slices/myListingSlice'
 import { toast } from '@/utils/toast'
 import type {
-  MyListing,
   MyListingDailySchedule,
   MyListingHourlySchedule,
   MyListingScheduleBasis,
 } from '@/types/myListing'
 import { SetTimeModal } from './SetTimeModal'
 import { cn } from '@/utils/cn'
+import { MultiImageUploader } from '@/components/common/MultiImageUploader'
+import {
+  useCreateMyServiceListingMutation,
+  useGetAllMyServiceListQuery,
+  useUpdateMyServiceListingMutation,
+} from '@/redux/api/serviceMyListingApi'
 
 const SCHEDULE_NONE = '__none__'
 
 const listingSchema = z
   .object({
-    title: z.string().min(1, 'Service name is required'),
+    name: z.string().min(1, 'Service name is required'),
     price: z.coerce.number().positive('Enter a valid price'),
-    discountPrice: z.coerce.number().min(0, 'Must be 0 or more'),
+    discount: z.coerce.number().min(0, 'Must be 0 or more'),
     description: z.string().min(1, 'Description is required'),
     scheduleBasis: z.enum(['daily', 'hourly']).optional(),
   })
@@ -44,16 +46,17 @@ const SCHEDULE_OPTIONS = [
   { value: 'hourly', label: 'Hourly basis' },
 ]
 
-const DEFAULT_PLACEHOLDER_IMAGE =
-  'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&q=80'
-
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
+function toApiDayKey(key: string): string | null {
+  const k = key.toLowerCase()
+  if (k === 'all') return null
+  if (k === 'sun' || k === 'sunday') return 'SUNDAY'
+  if (k === 'mon' || k === 'monday') return 'MONDAY'
+  if (k === 'tue' || k === 'tuesday') return 'TUESDAY'
+  if (k === 'wed' || k === 'wednesday') return 'WEDNESDAY'
+  if (k === 'thu' || k === 'thursday') return 'THURSDAY'
+  if (k === 'fri' || k === 'friday') return 'FRIDAY'
+  if (k === 'sat' || k === 'saturday') return 'SATURDAY'
+  return null
 }
 
 function summarizeSchedule(
@@ -75,12 +78,20 @@ function summarizeSchedule(
 export default function CreateEditListingPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const items = useAppSelector((s) => s.myListings.items)
-  const existing = id ? items.find((x) => x.id === id) : undefined
-  const isEdit = Boolean(existing)
 
-  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [images, setImages] = useState<Array<string | File>>([])
+
+  const { data: listData } = useGetAllMyServiceListQuery({ page: 1, limit: 200 })
+  const existing = useMemo(() => {
+    if (!id) return undefined
+    return listData?.data?.find((x) => x._id === id)
+  }, [id, listData?.data])
+  const isEdit = Boolean(id)
+
+  const [createService, { isLoading: isCreating }] =
+    useCreateMyServiceListingMutation()
+  const [updateService, { isLoading: isUpdating }] =
+    useUpdateMyServiceListingMutation()
   const [dailySchedule, setDailySchedule] = useState<
     MyListingDailySchedule | undefined
   >(existing?.dailySchedule)
@@ -101,11 +112,16 @@ export default function CreateEditListingPage() {
   } = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
-      title: existing?.title ?? '',
+      name: existing?.name ?? '',
       price: existing?.price ?? 0,
-      discountPrice: existing?.discountPrice ?? 0,
+      discount: existing?.discount ?? 0,
       description: existing?.description ?? '',
-      scheduleBasis: existing?.scheduleBasis,
+      scheduleBasis:
+        existing?.scheduleType === 'HOURLY'
+          ? 'hourly'
+          : existing?.scheduleType === 'DAILY'
+            ? 'daily'
+            : undefined,
     },
   })
 
@@ -114,21 +130,32 @@ export default function CreateEditListingPage() {
 
   useEffect(() => {
     if (!existing) return
-    setValue('title', existing.title)
+    setImages(existing.images ?? [])
+    setValue('name', existing.name)
     setValue('price', existing.price)
-    setValue('discountPrice', existing.discountPrice)
+    setValue('discount', existing.discount ?? 0)
     setValue('description', existing.description)
-    setValue('scheduleBasis', existing.scheduleBasis)
-    setDailySchedule(existing.dailySchedule)
-    setHourlySchedule(existing.hourlySchedule)
+    const basis =
+      existing.scheduleType === 'HOURLY'
+        ? 'hourly'
+        : existing.scheduleType === 'DAILY'
+          ? 'daily'
+          : undefined
+    setValue('scheduleBasis', basis)
+    if (basis === 'daily') {
+      const selectedDays = (existing.schedules ?? [])
+        .map((s) => (s.day ? s.day.toLowerCase() : ''))
+        .filter(Boolean)
+      setDailySchedule({ selectedDays })
+    }
   }, [existing, setValue])
 
   useEffect(() => {
-    if (isEdit && id && !existing) {
+    if (id && !existing && listData?.data) {
       toast({ title: 'Listing not found', variant: 'destructive' })
-      navigate('/my-listing')
+      navigate('/my-service-listing')
     }
-  }, [isEdit, id, existing, navigate])
+  }, [existing, id, listData?.data, navigate])
 
   const openScheduleModal = (mode: 'daily' | 'hourly') => {
     setTimeModalMode(mode)
@@ -176,38 +203,66 @@ export default function CreateEditListingPage() {
       }
     }
 
-    let imageUrl = existing?.imageUrl ?? DEFAULT_PLACEHOLDER_IMAGE
-    if (imageFile) {
-      try {
-        imageUrl = await fileToDataUrl(imageFile)
-      } catch {
-        toast({ title: 'Could not read image file', variant: 'destructive' })
-        return
-      }
+    if (!images.length) {
+      toast({ title: 'Please upload at least one image', variant: 'destructive' })
+      return
     }
 
-    const payload: MyListing = {
-      id: existing?.id ?? '',
-      title: data.title.trim(),
+    const existingImagePaths = images.filter(
+      (x): x is string => typeof x === 'string' && x.trim().length > 0
+    )
+
+    const scheduleType = basis.toUpperCase()
+    const schedules =
+      basis === 'daily'
+        ? (dailySchedule?.selectedDays ?? [])
+            .map((d) => toApiDayKey(d))
+            .filter(Boolean)
+            .map((day) => ({ day }))
+        : (hourlySchedule?.selectedDayKeys ?? [])
+            .map((d) => toApiDayKey(d))
+            .filter(Boolean)
+            .map((day) => ({
+              day,
+              timeSlots: hourlySchedule?.timeSlots ?? [],
+            }))
+
+    const payload: Record<string, unknown> = {
+      name: data.name.trim(),
       price: data.price,
-      discountPrice: data.discountPrice,
+      discount: data.discount,
       description: data.description.trim(),
-      imageUrl,
-      rating: existing?.rating ?? 5,
-      status: existing?.status ?? 'active',
-      scheduleBasis: basis,
-      dailySchedule: basis === 'daily' ? dailySchedule : undefined,
-      hourlySchedule: basis === 'hourly' ? hourlySchedule : undefined,
+      scheduleType,
+      schedules,
+      // for hourly (optional, server may ignore)
+      duration: basis === 'hourly' ? hourlySchedule?.duration : undefined,
     }
 
-    if (isEdit && existing) {
-      dispatch(updateMyListing({ ...payload, id: existing.id }))
-      toast({ title: 'Listing updated', variant: 'success' })
-    } else {
-      dispatch(addMyListing({ ...payload, id: '' }))
-      toast({ title: 'Listing created', variant: 'success' })
+    // Important: on create, don't send `images: []` in JSON; some backends treat it
+    // as the source of truth and overwrite uploaded files. On edit, send existing
+    // image paths to preserve them when user doesn't upload new ones.
+    if (id && existingImagePaths.length) {
+      payload.images = existingImagePaths
     }
-    navigate('/my-listing')
+
+    const fd = new FormData()
+    fd.append('data', JSON.stringify(payload))
+    images.forEach((img) => {
+      if (typeof img !== 'string') fd.append('images', img, img.name)
+    })
+
+    try {
+      if (id) {
+        await updateService({ id, body: fd }).unwrap()
+        toast({ title: 'Service updated', variant: 'success' })
+      } else {
+        await createService(fd).unwrap()
+        toast({ title: 'Service created', variant: 'success' })
+      }
+      navigate('/my-service-listing')
+    } catch {
+      toast({ title: 'Could not save service', variant: 'destructive' })
+    }
   }
 
   return (
@@ -225,9 +280,9 @@ export default function CreateEditListingPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         <div>
-          <Label className="text-base font-medium">Service Photo</Label>
-          <div className="mt-2 w-80">
-            <ImageUploader value={imageFile ?? existing?.imageUrl ?? null} onChange={setImageFile} />
+          <Label className="text-base font-medium">Service Photos</Label>
+          <div className="mt-2">
+            <MultiImageUploader value={images} onChange={setImages} className="max-w-3xl" />
           </div>
         </div>
 
@@ -237,8 +292,8 @@ export default function CreateEditListingPage() {
               label="Service Name"
               placeholder="e.g. Shoe Shining"
               required
-              {...register('title')}
-              error={errors.title?.message}
+              {...register('name')}
+              error={errors.name?.message}
             />
             <FormInput
               label="Price"
@@ -250,13 +305,13 @@ export default function CreateEditListingPage() {
               error={errors.price?.message}
             />
             <FormInput
-              label="Discount Price"
+              label="Discount"
               type="number"
               step="0.01"
-              placeholder="$80.00"
+              placeholder="10"
               required
-              {...register('discountPrice')}
-              error={errors.discountPrice?.message}
+              {...register('discount')}
+              error={errors.discount?.message}
             />
 
             <div className="space-y-1.5">
@@ -319,8 +374,9 @@ export default function CreateEditListingPage() {
           <Button
             type="submit"
             className="min-w-[200px] rounded-full bg-[#22C55E] px-10 py-6 text-base text-white hover:bg-[#16A34A]"
+            disabled={isCreating || isUpdating}
           >
-            Save Changes
+            {isCreating || isUpdating ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </form>

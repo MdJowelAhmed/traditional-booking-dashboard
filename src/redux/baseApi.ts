@@ -25,6 +25,7 @@ export const baseApi = createApi({
     'Product',
     'Category',
     'HostListing',
+    'ServiceListing',
     'Dashboard',
     'Review',
     'Setting',

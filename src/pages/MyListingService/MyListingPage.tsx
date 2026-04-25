@@ -5,46 +5,54 @@ import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/common/SearchInput'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
-import { removeMyListing } from '@/redux/slices/myListingSlice'
 import { toast } from '@/utils/toast'
-import type { MyListing } from '@/types/myListing'
 import { ListingCard } from './ListingCard'
 import { DEFAULT_PAGINATION } from '@/utils/constants'
+import {
+  type ServiceApiDoc,
+  useDeleteMyServiceListingMutation,
+  useGetAllMyServiceListQuery,
+} from '@/redux/api/serviceMyListingApi'
 
 export default function MyListingServicePage() {
   const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const items = useAppSelector((s) => s.myListings.items)
 
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGINATION.limit)
-  const [deleteTarget, setDeleteTarget] = useState<MyListing | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ServiceApiDoc | null>(null)
+
+  const { data, isLoading } = useGetAllMyServiceListQuery({
+    page,
+    limit: itemsPerPage,
+  })
+  const items = data?.data ?? []
+  const [deleteService, { isLoading: isDeleting }] =
+    useDeleteMyServiceListingMutation()
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return items
     return items.filter(
       (x) =>
-        x.title.toLowerCase().includes(q) ||
+        x.name.toLowerCase().includes(q) ||
         x.description.toLowerCase().includes(q)
     )
   }, [items, search])
 
-  const totalItems = filtered.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage))
+  const totalItems = data?.meta?.total ?? filtered.length
+  const totalPages = data?.meta?.totalPage ?? 1
+  const pageItems = filtered
 
-  const pageItems = useMemo(() => {
-    const start = (page - 1) * itemsPerPage
-    return filtered.slice(start, start + itemsPerPage)
-  }, [filtered, page, itemsPerPage])
-
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return
-    dispatch(removeMyListing(deleteTarget.id))
-    toast({ title: 'Listing removed', variant: 'success' })
-    setDeleteTarget(null)
+    try {
+      await deleteService(deleteTarget._id).unwrap()
+      toast({ title: 'Listing removed', variant: 'success' })
+      setDeleteTarget(null)
+    } catch {
+      toast({ title: 'Could not delete listing', variant: 'destructive' })
+    }
   }
 
   return (
@@ -83,11 +91,15 @@ export default function MyListingServicePage() {
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {pageItems.map((listing) => (
-          <ListingCard key={listing.id} listing={listing} onDelete={setDeleteTarget} />
+          <ListingCard
+            key={listing._id}
+            listing={listing}
+            onDelete={setDeleteTarget}
+          />
         ))}
       </div>
 
-      {pageItems.length === 0 && (
+      {!isLoading && pageItems.length === 0 && (
         <p className="py-12 text-center text-muted-foreground">
           No listings match your search.
         </p>
@@ -114,11 +126,12 @@ export default function MyListingServicePage() {
         title="Delete listing?"
         description={
           deleteTarget
-            ? `This will remove “${deleteTarget.title}” from your listings. This action cannot be undone.`
+            ? `This will remove “${deleteTarget.name}” from your listings. This action cannot be undone.`
             : ''
         }
         confirmText="Delete"
         variant="danger"
+        isLoading={isDeleting}
       />
     </div>
   )

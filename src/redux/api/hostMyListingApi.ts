@@ -116,4 +116,5 @@ export const {
     useCreateMyHostListingMutation,
     useUpdateMyHostListingMutation,
     useDeleteMyHostListingMutation,
+    useGetCategoriesQuery,
 } = hostMyLisitngApi

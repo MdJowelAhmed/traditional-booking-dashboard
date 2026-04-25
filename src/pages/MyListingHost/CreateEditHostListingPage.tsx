@@ -160,7 +160,11 @@ export default function CreateEditHostListingPage() {
       return
     }
 
-    const payload = {
+    const existingImagePaths = images.filter(
+      (x): x is string => typeof x === 'string' && x.trim().length > 0
+    )
+
+    const payload: Record<string, unknown> = {
       name: data.name.trim(),
       categoryId: data.categoryId.trim(),
       size: data.size,
@@ -172,10 +176,15 @@ export default function CreateEditHostListingPage() {
       description: data.description.trim(),
     }
 
+    // Preserve existing images only on edit.
+    if (id && existingImagePaths.length) {
+      payload.images = existingImagePaths
+    }
+
     const fd = new FormData()
     fd.append('data', JSON.stringify(payload))
     images.forEach((img) => {
-      if (typeof img !== 'string') fd.append('images', img)
+      if (typeof img !== 'string') fd.append('images', img, img.name)
     })
 
     try {
