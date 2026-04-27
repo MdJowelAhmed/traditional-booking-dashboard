@@ -16,12 +16,13 @@ import {
     ResponsiveContainer,
 } from 'recharts'
 import { motion } from 'framer-motion'
-import { years, type ChartDataPoint } from './dashboardData'
+import type { ChartDataPoint } from './dashboardData'
 
 interface EarningsSummaryChartProps {
     chartData: ChartDataPoint[]
     selectedYear: string
     onYearChange: (year: string) => void
+    years: string[]
 }
 
 
@@ -83,7 +84,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     return null
 }
 
-export function EarningsSummaryChart({ chartData, selectedYear, onYearChange }: EarningsSummaryChartProps) {
+export function EarningsSummaryChart({ chartData, selectedYear, onYearChange, years }: EarningsSummaryChartProps) {
     const dataMax = Math.max(...chartData.map((d) => d.revenue), 0)
     const yTicks = generateTicks(dataMax)
     const yDomainMax = yTicks[yTicks.length - 1] ?? 1

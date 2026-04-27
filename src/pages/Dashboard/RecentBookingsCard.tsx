@@ -4,8 +4,9 @@ import { ExternalLink } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/utils/formatters'
-import { recentBookingsDashboard, type RecentBookingItem } from './dashboardData'
 import { cn } from '@/utils/cn'
+import { imageUrl } from '@/components/common/imageUrl'
+import type { RecentBookingItem as ApiBooking } from '@/redux/api/overviewApi'
 
 function formatDateRange(start: string, end: string) {
   const s = new Date(start)
@@ -51,7 +52,40 @@ function BookingRow({ item, index }: { item: RecentBookingItem; index: number })
   )
 }
 
-export function RecentBookingsCard() {
+type RecentBookingItem = {
+  id: string
+  customerName: string
+  serviceType: string
+  startDate: string
+  endDate: string
+  amount: number
+  status: 'pending' | 'confirmed'
+  avatarUrl: string
+}
+
+function mapBooking(b: ApiBooking): RecentBookingItem {
+  const bookingStatus = (b.bookingStatus || '').toUpperCase()
+  const isConfirmed = bookingStatus === 'CONFIRMED'
+  return {
+    id: b._id,
+    customerName: b.user?.name ?? '—',
+    serviceType: b.property?.category ?? b.property?.name ?? '—',
+    startDate: b.startDate,
+    endDate: b.endDate,
+    amount: b.payment?.amount ?? 0,
+    status: isConfirmed ? 'confirmed' : 'pending',
+    avatarUrl: imageUrl(b.user?.image),
+  }
+}
+
+export function RecentBookingsCard({
+  items,
+  isLoading,
+}: {
+  items: ApiBooking[]
+  isLoading?: boolean
+}) {
+  const mapped = items.map(mapBooking)
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -75,9 +109,15 @@ export function RecentBookingsCard() {
           <div
             className="max-h-[min(480px,calc(100vh-16rem))] space-y-3 overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:#70B72B_#E5E7EB] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[#E5E7EB] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#70B72B]"
           >
-            {recentBookingsDashboard.map((item, index) => (
-              <BookingRow key={item.id} item={item} index={index} />
-            ))}
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : mapped.length ? (
+              mapped.map((item, index) => (
+                <BookingRow key={item.id} item={item} index={index} />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No recent bookings.</p>
+            )}
           </div>
         </CardContent>
       </Card>

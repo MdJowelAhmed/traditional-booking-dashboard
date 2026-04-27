@@ -27,6 +27,8 @@ export const baseApi = createApi({
     'HostListing',
     'ServiceListing',
     'Dashboard',
+    'Bookings',
+    'SubscriptionPackage',
     'Review',
     'Setting',
     'Location',

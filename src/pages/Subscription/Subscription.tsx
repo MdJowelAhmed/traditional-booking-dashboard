@@ -1,120 +1,41 @@
-import { useMemo, useState } from 'react'
+
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { CardContent } from '@/components/ui/card'
 import { Pagination } from '@/components/common/Pagination'
-import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useUrlNumber } from '@/hooks/useUrlState'
-import { useAppSelector } from '@/redux/hooks'
-import { UserRole } from '@/types/roles'
-import {
-  mockSubscriptions,
-  tierToDisplayName,
-  defaultEndsAtFromPurchase,
-  type PackageTier,
-  type SubscriptionRow,
-  type SubscriptionAccountType,
-} from './subscriptionData'
-import { SubscriptionTable } from './components/SubscriptionTable'
-import { BuyPackageModal } from './components/BuyPackageModal'
 import { toast } from '@/utils/toast'
-
-function nextDisplaySerial(rows: SubscriptionRow[]): string {
-  const nums = rows
-    .map((r) => parseInt(r.displaySerial.replace(/^#/, ''), 10))
-    .filter(Number.isFinite)
-  const next = (nums.length ? Math.max(...nums) : 1000) + 1
-  return `#${next}`
-}
-
-function roleToAccountType(role: string): SubscriptionAccountType {
-  if (role === UserRole.SERVICE) return 'business'
-  return 'host'
-}
-
-function displayNameFromUser(user: {
-  firstName?: string
-  lastName?: string
-  email?: string
-}): string {
-  const a = user.firstName?.trim() ?? ''
-  const b = user.lastName?.trim() ?? ''
-  if (a || b) return `${a} ${b}`.trim()
-  return user.email?.split('@')[0] ?? 'User'
-}
+import { formatCurrency } from '@/utils/formatters'
+import { useGetSubscriptionPackagesQuery, usePurchasePackageMutation } from '@/redux/api/packageApi'
 
 export default function Subscription() {
-  const { user } = useAppSelector((s) => s.auth)
-  const role = user?.role ?? ''
-  const isHostAdmin = role === UserRole.HOST
-  const isSubscriber = role === UserRole.HOST || role === UserRole.SERVICE
-
   const [page, setPage] = useUrlNumber('page', 1)
   const [limit, setLimit] = useUrlNumber('limit', 10)
 
-  const [rows, setRows] = useState<SubscriptionRow[]>(mockSubscriptions)
-  const [buyOpen, setBuyOpen] = useState(false)
-  const [cancelTarget, setCancelTarget] = useState<SubscriptionRow | null>(null)
+  const { data, isLoading } = useGetSubscriptionPackagesQuery({ page, limit })
+  const [purchasePackage] = usePurchasePackageMutation()
+  const [redirectingId, setRedirectingId] = useState<string | null>(null)
 
-  const subscriberRows = useMemo(() => {
-    if (!isSubscriber || !user?.email) return []
-    const acct = roleToAccountType(role)
-    return rows.filter(
-      (r) =>
-        r.userEmail.toLowerCase() === user.email!.toLowerCase() && r.accountType === acct
-    )
-  }, [rows, isSubscriber, user?.email, role])
+  const packages = data?.data ?? []
+  const totalItems = data?.meta?.total ?? packages.length
+  const totalPages = data?.meta?.totalPage ?? 1
 
-  const tableRows = isHostAdmin ? rows : subscriberRows
-
-  const totalItems = tableRows.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / limit))
-
-  const pageItems = useMemo(() => {
-    const start = (page - 1) * limit
-    return tableRows.slice(start, start + limit)
-  }, [tableRows, page, limit])
-
-  const handleSelectPackage = (tier: PackageTier) => {
-    if (!user?.email) {
-      toast({ variant: 'destructive', title: 'You must be signed in to subscribe' })
-      return
+  const handleGetStarted = async (packageId: string) => {
+    if (redirectingId) return
+    setRedirectingId(packageId)
+    try {
+      const res = await purchasePackage({ packageId }).unwrap()
+      const url = res?.data?.url
+      if (!url) {
+        toast({ variant: 'destructive', title: 'Checkout URL not found' })
+        setRedirectingId(null)
+        return
+      }
+      window.location.href = url
+    } catch {
+      toast({ variant: 'destructive', title: 'Could not start checkout' })
+      setRedirectingId(null)
     }
-    const purchasedAt = new Date().toISOString()
-    const endsAt = defaultEndsAtFromPurchase(purchasedAt)
-    setRows((prev) => {
-      const displaySerial = nextDisplaySerial(prev)
-      return [
-        {
-          id: crypto.randomUUID(),
-          displaySerial,
-          packageName: tierToDisplayName(tier),
-          purchasedAt,
-          endsAt,
-          price: tier.price,
-          currency: 'USD',
-          status: 'active',
-          userName: displayNameFromUser(user),
-          userEmail: user.email.trim(),
-          accountType: roleToAccountType(role),
-        },
-        ...prev,
-      ]
-    })
-    setBuyOpen(false)
-    toast({ variant: 'success', title: 'Package purchased' })
-  }
-
-  const confirmCancelSubscription = () => {
-    if (!cancelTarget) return
-    setRows((prev) =>
-      prev.map((r) =>
-        r.id === cancelTarget.id ? { ...r, status: 'expired' as const } : r
-      )
-    )
-    toast({ variant: 'success', title: 'Subscription cancelled' })
-    setCancelTarget(null)
   }
 
   return (
@@ -131,37 +52,78 @@ export default function Subscription() {
               Subscription
             </h1>
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              {isHostAdmin
-                ? 'Review and update all subscriber records'
-                : 'Manage your subscription plan and payment methods'}
+              Choose a package and continue to Stripe checkout.
             </p>
           </div>
-          {isSubscriber && (
-            <Button
-              type="button"
-              onClick={() => setBuyOpen(true)}
-              className="shrink-0 gap-2 rounded-md bg-primary text-white hover:bg-[#5aad26]"
-            >
-              <Plus className="h-5 w-5" />
-              Buy New Package
-            </Button>
-          )}
         </div>
 
-        <CardContent className="p-0">
-          {isHostAdmin ? (
-            <SubscriptionTable
-              mode="admin"
-              rows={pageItems}
-            />
+        <div className="p-6 pt-0">
+          {isLoading ? (
+            <p className="py-10 text-center text-muted-foreground">Loading packages…</p>
+          ) : packages.length ? (
+            <div className="grid gap-4 items-stretch sm:grid-cols-2 lg:grid-cols-3">
+              {packages.map((pkg) => (
+                <div
+                  key={pkg._id}
+                  className="flex h-full flex-col rounded-2xl border border-sky-100/80 p-5 shadow-sm bg-gradient-to-b from-sky-50 via-white to-white"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        {pkg.paymentType}
+                      </p>
+                      <p className="text-xl font-bold text-slate-900">{pkg.title}</p>
+                    </div>
+                    <span className="rounded-full bg-[#6BBF2D] px-3 py-1 text-xs font-semibold text-white">
+                      {pkg.duration}
+                    </span>
+                  </div>
+
+                  <div className="flex-1">
+                    <p className="mt-3 text-sm text-muted-foreground line-clamp-3">
+                      {pkg.description}
+                    </p>
+
+                    <div className="mt-5">
+                      <p className="text-3xl font-bold text-slate-900 tabular-nums">
+                        {formatCurrency(pkg.price, 'USD')}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{pkg.paymentType}</p>
+                    </div>
+
+                    <ul className="mt-6 flex max-h-44 flex-col gap-2 overflow-y-auto pr-1 text-sm text-slate-700 [scrollbar-width:thin] [scrollbar-color:#70B72B_#E5E7EB] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[#E5E7EB] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#70B72B]">
+                      {pkg.features?.map((f, i) => (
+                        <li key={`${pkg._id}-f-${i}`} className="flex items-start gap-2">
+                          <span className="mt-0.5 h-2 w-2 rounded-full bg-[#6BBF2D]" />
+                          <span>
+                            {f.name ?? f.description}
+                            {f.isUnlimited
+                              ? ' (Unlimited)'
+                              : typeof f.limit === 'number'
+                                ? ` (Limit: ${f.limit})`
+                                : ''}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <Button
+                    type="button"
+                    className="mt-auto w-full rounded-xl bg-[#6BBF2D] hover:bg-[#5aad26] text-white mt-10"
+                    disabled={redirectingId !== null}
+                    onClick={() => handleGetStarted(pkg._id)}
+                  >
+                    {redirectingId === pkg._id ? 'Redirecting…' : 'Get Started'}
+                  </Button>
+                </div>
+              ))}
+            </div>
           ) : (
-            <SubscriptionTable
-              mode="subscriber"
-              rows={pageItems}
-              onCancel={setCancelTarget}
-            />
+            <p className="py-10 text-center text-muted-foreground">No packages found.</p>
           )}
-          <div className="border-t border-gray-100 px-6 py-4">
+
+          <div className="mt-6 border-t border-gray-100 pt-4">
             <Pagination
               currentPage={Math.min(page, totalPages)}
               totalPages={totalPages}
@@ -174,29 +136,8 @@ export default function Subscription() {
               }}
             />
           </div>
-        </CardContent>
+        </div>
       </div>
-
-      {isSubscriber && (
-        <BuyPackageModal
-          open={buyOpen}
-          onClose={() => setBuyOpen(false)}
-          onSelectPackage={handleSelectPackage}
-        />
-      )}
-
-      <ConfirmDialog
-        open={!!cancelTarget}
-        onClose={() => setCancelTarget(null)}
-        onConfirm={confirmCancelSubscription}
-        title="Cancel subscription?"
-        description={
-          cancelTarget
-            ? `Cancel “${cancelTarget.packageName}”? Your access will end after the current period (shown as expired in this demo).`
-            : ''
-        }
-        confirmText="Cancel subscription"
-      />
     </motion.div>
   )
 }
