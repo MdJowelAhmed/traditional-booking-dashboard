@@ -222,7 +222,7 @@ export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProp
               <thead>
                 <tr className="bg-primary text-white">
                   <th className="px-6 py-4 text-left text-sm font-bold">B.ID</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">Start Date</th>
                   <th className="px-6 py-4 text-left text-sm font-bold">Time</th>
                   <th className="px-6 py-4 text-left text-sm font-bold">Name</th>
                   <th className="px-6 py-4 text-left text-sm font-bold">Email</th>
@@ -250,7 +250,7 @@ export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProp
                       className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-6 py-4 text-sm font-medium text-slate-700">
-                        {booking.id}
+                        {booking.id.substring(0, 2)}...{booking.id.substring(booking.id.length - 6)}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-700">{booking.dateText}</td>
                       <td className="px-6 py-4 text-sm text-slate-700">{booking.timeText}</td>
