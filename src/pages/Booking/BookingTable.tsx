@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowDownNarrowWide, Eye } from 'lucide-react'
 import { useUrlNumber, useUrlString } from '@/hooks/useUrlState'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
-import { setFilters, setLimit, setPage } from '@/redux/slices/bookingSlice'
+import { useAppSelector } from '@/redux/hooks'
 import { SearchInput } from '@/components/common/SearchInput'
 import { Pagination } from '@/components/common/Pagination'
 import {
@@ -15,10 +14,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Booking } from '@/types'
 import { cn } from '@/utils/cn'
+import { UserRole } from '@/types/roles'
+import {
+  useGetMyBookingsHostQuery,
+  useGetServiceBookingsServiceQuery,
+  type HostBookingApiDoc,
+  type ServiceBookingApiDoc,
+} from '@/redux/api/myBookingApi'
 
-const PAYMENT_STATUS_OPTIONS: Array<{ value: Booking['paymentStatus'] | 'all'; label: string }> = [
+type PaymentStatusUi = 'Paid' | 'Pending' | 'Refunded'
+
+export type BookingRow = {
+  id: string
+  createdAt?: string
+  dateText: string
+  timeText: string
+  userName: string
+  userEmail: string
+  userPhone?: string
+  serviceName: string
+  amountText: string
+  paymentStatus: PaymentStatusUi
+  bookingStatus: string
+  raw: HostBookingApiDoc | ServiceBookingApiDoc
+}
+
+const PAYMENT_STATUS_OPTIONS: Array<{ value: PaymentStatusUi | 'all'; label: string }> = [
   { value: 'all', label: 'All Status' },
   { value: 'Paid', label: 'Paid' },
   { value: 'Pending', label: 'Pending' },
@@ -27,12 +49,14 @@ const PAYMENT_STATUS_OPTIONS: Array<{ value: Booking['paymentStatus'] | 'all'; l
 
 interface BookingTableProps {
   // onAddBooking: () => void;
-  onViewDetails: (booking: Booking) => void
-  onUpdateStatus: (booking: Booking) => void
+  onViewDetails: (booking: BookingRow) => void
+  onUpdateStatus: (booking: BookingRow) => void
 }
 
 export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProps) {
-  const dispatch = useAppDispatch()
+  const { user } = useAppSelector((s) => s.auth)
+  const isHost = user?.role === UserRole.HOST
+  const isService = user?.role === UserRole.SERVICE
 
   // URL state management
   const [searchQuery, setSearchQuery] = useUrlString('search', '')
@@ -40,34 +64,100 @@ export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProp
   const [currentPage, setCurrentPage] = useUrlNumber('page', 1)
   const [itemsPerPage, setItemsPerPage] = useUrlNumber('limit', 10)
 
-  // Redux state
-  const { filteredList, pagination } = useAppSelector((state) => state.bookings)
-
-  // Sync URL state with Redux filters
-  useEffect(() => {
-    dispatch(
-      setFilters({
-        search: searchQuery,
-        paymentStatus: paymentStatusFilter as any,
-      })
+  // Fetch bookings based on role
+  const { data: hostData, isLoading: hostLoading } = useGetMyBookingsHostQuery(
+    { page: currentPage, limit: itemsPerPage },
+    { skip: !isHost }
+  )
+  const { data: serviceData, isLoading: serviceLoading } =
+    useGetServiceBookingsServiceQuery(
+      { page: currentPage, limit: itemsPerPage },
+      { skip: !isService }
     )
-  }, [searchQuery, paymentStatusFilter, dispatch])
 
-  // Sync URL pagination with Redux
-  useEffect(() => {
-    dispatch(setPage(currentPage))
-  }, [currentPage, dispatch])
+  const isLoading = hostLoading || serviceLoading
 
-  useEffect(() => {
-    dispatch(setLimit(itemsPerPage))
-  }, [itemsPerPage, dispatch])
+  const rows = useMemo<BookingRow[]>(() => {
+    const list: Array<HostBookingApiDoc | ServiceBookingApiDoc> = isHost
+      ? hostData?.data ?? []
+      : isService
+        ? serviceData?.data ?? []
+        : []
 
-  // Pagination
-  const totalPages = pagination.totalPages
-  const paginatedData = useMemo(() => {
-    const startIndex = (pagination.page - 1) * pagination.limit
-    return filteredList.slice(startIndex, startIndex + pagination.limit)
-  }, [filteredList, pagination.page, pagination.limit])
+    return list.map((b) => {
+      const createdAt = (b as any).createdAt as string | undefined
+      const created = createdAt ? new Date(createdAt) : null
+      const timeText =
+        created && !Number.isNaN(created.getTime())
+          ? created.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+          : '—'
+
+      const dateText = (() => {
+        const d =
+          'startDate' in b
+            ? new Date(b.startDate)
+            : new Date((b as ServiceBookingApiDoc).scheduledSlot?.date)
+        return !Number.isNaN(d.getTime()) ? d.toLocaleDateString() : '—'
+      })()
+
+      const paymentStatusRaw = (b as any).payment?.status as string | undefined
+      const paymentStatus: PaymentStatusUi =
+        paymentStatusRaw === 'PAID'
+          ? 'Paid'
+          : paymentStatusRaw === 'REFUNDED'
+            ? 'Refunded'
+            : 'Pending'
+
+      const amount = (b as any).payment?.amount
+      const currency = (b as any).payment?.currency
+      const amountText =
+        typeof amount === 'number'
+          ? `${amount} ${String(currency ?? '').toUpperCase()}`.trim()
+          : '—'
+
+      const serviceName =
+        'property' in b
+          ? `${b.property.address}`
+          : `${(b as ServiceBookingApiDoc).service?.name ?? '—'}`
+
+      return {
+        id: b._id,
+        createdAt,
+        dateText,
+        timeText,
+        userName: b.user?.name ?? '—',
+        userEmail: b.user?.email ?? '—',
+        userPhone: '—',
+        serviceName,
+        amountText,
+        paymentStatus,
+        bookingStatus: (b as any).bookingStatus ?? '—',
+        raw: b,
+      }
+    })
+  }, [hostData?.data, isHost, isService, serviceData?.data])
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    const pay = paymentStatusFilter as PaymentStatusUi | 'all'
+    return rows.filter((r) => {
+      const qOk =
+        !q ||
+        r.id.toLowerCase().includes(q) ||
+        r.userName.toLowerCase().includes(q) ||
+        r.userEmail.toLowerCase().includes(q) ||
+        r.serviceName.toLowerCase().includes(q)
+      const pOk = pay === 'all' ? true : r.paymentStatus === pay
+      return qOk && pOk
+    })
+  }, [paymentStatusFilter, rows, searchQuery])
+
+  const totalItems = (isHost ? hostData?.meta?.total : serviceData?.meta?.total) ?? filtered.length
+  const totalPages =
+    (isHost ? hostData?.meta?.totalPage : serviceData?.meta?.totalPage) ?? 1
+
+  // Server pagination already applied; just show filtered
+  const paginatedData = filtered
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -77,19 +167,7 @@ export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProp
     setItemsPerPage(limit)
   }
 
-  const getTime = (b: Booking) => {
-    if (b.createdAt) {
-      const d = new Date(b.createdAt)
-      if (!Number.isNaN(d.getTime())) {
-        return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-      }
-    }
-    return '09:00 PM'
-  }
-
-  const getServiceName = (b: Booking) => b.carName ?? b.carModel
-
-  const getStatusPill = (status: Booking['paymentStatus']) => {
+  const getStatusPill = (status: PaymentStatusUi) => {
     const base =
       'inline-flex items-center px-3 py-2 w-[90px] justify-center text-center rounded-sm text-xs font-medium'
     const styles =
@@ -159,7 +237,7 @@ export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProp
                 {paginatedData.length === 0 ? (
                   <tr>
                     <td colSpan={10} className="px-6 py-8 text-center text-gray-500">
-                      No bookings found
+                      {isLoading ? 'Loading…' : 'No bookings found'}
                     </td>
                   </tr>
                 ) : (
@@ -174,13 +252,13 @@ export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProp
                       <td className="px-6 py-4 text-sm font-medium text-slate-700">
                         {booking.id}
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-700">{booking.startDate}</td>
-                      <td className="px-6 py-4 text-sm text-slate-700">{getTime(booking)}</td>
-                      <td className="px-6 py-4 text-sm text-slate-700">{booking.clientName}</td>
-                      <td className="px-6 py-4 text-sm text-slate-700">{booking.clientEmail ?? '—'}</td>
-                      <td className="px-6 py-4 text-sm text-slate-700">{booking.clientPhone ?? '—'}</td>
-                      <td className="px-6 py-4 text-sm text-slate-700">{getServiceName(booking)}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-800">{booking.payment}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{booking.dateText}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{booking.timeText}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{booking.userName}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{booking.userEmail}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{booking.userPhone ?? '—'}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{booking.serviceName}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-slate-800">{booking.amountText}</td>
                       <td className="px-6 py-4">{getStatusPill(booking.paymentStatus)}</td>
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2">
@@ -213,10 +291,10 @@ export function BookingTable({ onViewDetails, onUpdateStatus }: BookingTableProp
 
           <div className="px-6 py-4 border-t border-gray-100">
             <Pagination
-              currentPage={pagination.page}
+              currentPage={Math.min(currentPage, totalPages)}
               totalPages={totalPages}
-              totalItems={filteredList.length}
-              itemsPerPage={pagination.limit}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
               onItemsPerPageChange={handleItemsPerPageChange}
             />

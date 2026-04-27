@@ -3,24 +3,24 @@ import { BookingTable } from './BookingTable'
 // import { AddBookingModal } from './components/AddBookingModal'
 import { BookingDetailsModal } from './components/BookingDetailsModal'
 import { StatusUpdateModal } from './components/StatusUpdateModal'
-import type { Booking } from '@/types'
+import type { BookingRow } from './BookingTable'
 
 const BookingManagement = () => {
   // const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null)
 
   // const handleAddBooking = () => {
   //   setIsAddModalOpen(true)
   // }
 
-  const handleViewDetails = (booking: Booking) => {
+  const handleViewDetails = (booking: BookingRow) => {
     setSelectedBooking(booking)
     setIsDetailsModalOpen(true)
   }
 
-  const handleOpenStatusUpdate = (booking: Booking) => {
+  const handleOpenStatusUpdate = (booking: BookingRow) => {
     setSelectedBooking(booking)
     setIsStatusModalOpen(true)
   }

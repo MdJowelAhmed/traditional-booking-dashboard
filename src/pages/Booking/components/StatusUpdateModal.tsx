@@ -1,95 +1,111 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { useAppDispatch } from '@/redux/hooks'
-import { updateBookingPaymentStatus } from '@/redux/slices/bookingSlice'
-import type { Booking } from '@/types'
 import { toast } from '@/utils/toast'
-
-const PAYMENT_STATUS_OPTIONS: Array<Booking['paymentStatus']> = [
-  'Paid',
-  'Pending',
-  'Refunded',
-]
+import { useAppSelector } from '@/redux/hooks'
+import { UserRole } from '@/types/roles'
+import type { BookingRow } from '../BookingTable'
+import {
+  useBookingCancelHostMutation,
+  useBookingCompletedHostMutation,
+  useServiceBookingCancelServiceMutation,
+  useServiceBookingCompletedServiceMutation,
+} from '@/redux/api/myBookingApi'
 
 interface StatusUpdateModalProps {
   open: boolean
   onClose: () => void
-  booking: Booking | null
+  booking: BookingRow | null
 }
 
 export function StatusUpdateModal({ open, onClose, booking }: StatusUpdateModalProps) {
-  const dispatch = useAppDispatch()
-  const [value, setValue] = useState<Booking['paymentStatus']>('Pending')
-
-  const initialValue = useMemo<Booking['paymentStatus']>(() => {
-    return booking?.paymentStatus ?? 'Pending'
-  }, [booking])
+  const { user } = useAppSelector((s) => s.auth)
+  const isHost = user?.role === UserRole.HOST
+  const isService = user?.role === UserRole.SERVICE
+  const [action, setAction] = useState<'complete' | 'cancel'>('complete')
+  const [cancelHost, { isLoading: hostCancelling }] =
+    useBookingCancelHostMutation()
+  const [completeHost, { isLoading: hostCompleting }] =
+    useBookingCompletedHostMutation()
+  const [cancelService, { isLoading: serviceCancelling }] =
+    useServiceBookingCancelServiceMutation()
+  const [completeService, { isLoading: serviceCompleting }] =
+    useServiceBookingCompletedServiceMutation()
 
   if (!booking) return null
 
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen) {
-      setValue(initialValue)
-    } else {
-      onClose()
-    }
-  }
+  const isBusy =
+    hostCancelling || hostCompleting || serviceCancelling || serviceCompleting
 
-  const handleSave = () => {
-    dispatch(updateBookingPaymentStatus({ id: booking.id, paymentStatus: value }))
-    toast({
-      title: 'Status updated',
-      description: `Booking payment status changed to ${value}.`,
-      variant: 'success',
-    })
-    onClose()
+  const handleConfirm = async () => {
+    try {
+      if (isHost) {
+        if (action === 'cancel') await cancelHost(booking.id).unwrap()
+        else await completeHost(booking.id).unwrap()
+      } else if (isService) {
+        if (action === 'cancel') await cancelService(booking.id).unwrap()
+        else await completeService(booking.id).unwrap()
+      }
+      toast({ title: 'Status updated', variant: 'success' })
+      onClose()
+    } catch {
+      toast({ title: 'Could not update status', variant: 'destructive' })
+    }
   }
 
   return (
     <ModalWrapper
       open={open}
-      onClose={() => handleOpenChange(false)}
-      title="Update Status"
+      onClose={onClose}
+      title="Update Booking Status"
       description={`Booking ID: ${booking.id}`}
       size="sm"
       className="bg-white"
     >
       <div className="space-y-5">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-800">Select status</p>
-          <Select value={value} onValueChange={(v) => setValue(v as Booking['paymentStatus'])}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {PAYMENT_STATUS_OPTIONS.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <p className="text-sm font-medium text-slate-800">Choose action</p>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              type="button"
+              variant={action === 'complete' ? 'default' : 'outline'}
+              className={
+                action === 'complete'
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : ''
+              }
+              onClick={() => setAction('complete')}
+              disabled={isBusy}
+            >
+              Complete
+            </Button>
+            <Button
+              type="button"
+              variant={action === 'cancel' ? 'default' : 'outline'}
+              className={
+                action === 'cancel'
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : ''
+              }
+              onClick={() => setAction('cancel')}
+              disabled={isBusy}
+            >
+              Cancel
+            </Button>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            Close
           </Button>
           <Button
             type="button"
-            onClick={handleSave}
-            className="bg-green-600 hover:bg-green-700 text-white"
-            disabled={value === booking.paymentStatus}
+            onClick={handleConfirm}
+            className="bg-primary hover:bg-primary/90 text-white"
+            disabled={isBusy}
           >
-            Update
+            {isBusy ? 'Updating…' : 'Confirm'}
           </Button>
         </div>
       </div>

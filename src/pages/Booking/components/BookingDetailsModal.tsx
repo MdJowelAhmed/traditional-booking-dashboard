@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react'
 import { ModalWrapper } from '@/components/common'
-import type { Booking } from '@/types'
 import { cn } from '@/utils/cn'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getInitials } from '@/utils/formatters'
+import type { BookingRow } from '../BookingTable'
 
 interface BookingDetailsModalProps {
   open: boolean
   onClose: () => void
-  booking: Booking | null
+  booking: BookingRow | null
 }
 
 export function BookingDetailsModal({
@@ -54,13 +54,13 @@ export function BookingDetailsModal({
         {/* Header (avatar + name + email) */}
         <div className="flex flex-col items-center text-center pt-2">
           <Avatar className="h-20 w-20 ring-4 ring-muted">
-            <AvatarImage src={undefined} alt={booking.clientName} />
+            <AvatarImage src={undefined} alt={booking.userName} />
             <AvatarFallback className="bg-muted text-foreground font-semibold">
-              {getInitials(booking.clientName)}
+              {getInitials(booking.userName)}
             </AvatarFallback>
           </Avatar>
-          <p className="mt-3 text-base font-semibold text-foreground">{booking.clientName}</p>
-          <p className="text-xs text-muted-foreground">{booking.clientEmail || 'N/A'}</p>
+          <p className="mt-3 text-base font-semibold text-foreground">{booking.userName}</p>
+          <p className="text-xs text-muted-foreground">{booking.userEmail || 'N/A'}</p>
         </div>
 
         {/* Info blocks */}
@@ -69,9 +69,9 @@ export function BookingDetailsModal({
             <p className="text-sm font-semibold text-foreground">Basic Information</p>
             <div className="mt-3 divide-y divide-border">
               <InfoRow label="User ID" value={`#${booking.id}`} />
-              <InfoRow label="Full Name" value={booking.clientName} />
-              <InfoRow label="Email" value={booking.clientEmail || 'N/A'} />
-              <InfoRow label="Phone" value={booking.clientPhone || 'N/A'} />
+              <InfoRow label="Full Name" value={booking.userName} />
+              <InfoRow label="Email" value={booking.userEmail || 'N/A'} />
+              <InfoRow label="Phone" value={booking.userPhone || 'N/A'} />
             </div>
           </div>
 
@@ -79,10 +79,11 @@ export function BookingDetailsModal({
             <p className="text-sm font-semibold text-foreground">Booking Details</p>
             <div className="mt-3 divide-y divide-border">
               <InfoRow label="Booking ID" value={`#${booking.id}`} />
-              <InfoRow label="Price" value={booking.payment} />
-              <InfoRow label="Selected Service" value={booking.plan} />
-              <InfoRow label="Booking Date" value={booking.startDate} />
+              <InfoRow label="Price" value={booking.amountText} />
+              <InfoRow label="Selected Service" value={booking.serviceName} />
+              <InfoRow label="Booking Date" value={booking.dateText} />
               <InfoRow label="Booking Time" value="09:00 AM" valueClassName="text-muted-foreground" />
+              <InfoRow label="Booking Status" value={booking.bookingStatus} />
               <InfoRow
                 label="Payment Status"
                 value={booking.paymentStatus}
