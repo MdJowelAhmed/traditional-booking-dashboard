@@ -59,6 +59,46 @@ export interface SubscriptionPackagePayload {
     }>
 }
 
+export interface FeatureUsageApi {
+    name: string
+    totalLimit: number | null
+    isUnlimited: boolean
+    used: number
+    remaining: number | null
+}
+
+export interface MySubscriptionApi {
+    _id: string
+    customerId: string
+    price: number
+    userId: string
+    package: Pick<
+        SubscriptionPackageApiDoc,
+        '_id' | 'title' | 'description' | 'price' | 'duration'
+    >
+    packageName: string
+    trxId: string
+    subscriptionId: string
+    status: string
+    currentPeriodStart: string
+    currentPeriodEnd: string
+    cancelAtPeriodEnd: boolean
+    provider: string
+    featureUsage: FeatureUsageApi[]
+    createdAt: string
+    updatedAt: string
+    __v?: number
+}
+
+export interface MySubscriptionsResponse {
+    success: boolean
+    message: string
+    statusCode: number
+    data: {
+        subscription: MySubscriptionApi | null
+    }
+}
+
 const subscriptionPackageApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         getSubscriptionPackages: builder.query<
@@ -90,10 +130,21 @@ const subscriptionPackageApi = baseApi.injectEndpoints({
             invalidatesTags: ['SubscriptionPackage'],
         }),
 
+        mySubscriptionsPackages: builder.query<
+            MySubscriptionsResponse,
+            void
+        >({
+            query: () => ({
+                url: `/subscriptions/my-subscriptions`,
+                method: 'GET',
+            }),
+            providesTags: ['SubscriptionPackage'],
+        }),
     }),
 })
 
 export const {
     useGetSubscriptionPackagesQuery,
     usePurchasePackageMutation,
+    useMySubscriptionsPackagesQuery,
 } = subscriptionPackageApi

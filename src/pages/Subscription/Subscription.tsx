@@ -6,19 +6,25 @@ import { Pagination } from '@/components/common/Pagination'
 import { useUrlNumber } from '@/hooks/useUrlState'
 import { toast } from '@/utils/toast'
 import { formatCurrency } from '@/utils/formatters'
-import { useGetSubscriptionPackagesQuery, usePurchasePackageMutation } from '@/redux/api/packageApi'
+import {
+  useGetSubscriptionPackagesQuery,
+  useMySubscriptionsPackagesQuery,
+  usePurchasePackageMutation,
+} from '@/redux/api/packageApi'
 
 export default function Subscription() {
   const [page, setPage] = useUrlNumber('page', 1)
   const [limit, setLimit] = useUrlNumber('limit', 10)
 
   const { data, isLoading } = useGetSubscriptionPackagesQuery({ page, limit })
+  const { data: mySubData } = useMySubscriptionsPackagesQuery()
   const [purchasePackage] = usePurchasePackageMutation()
   const [redirectingId, setRedirectingId] = useState<string | null>(null)
 
   const packages = data?.data ?? []
   const totalItems = data?.meta?.total ?? packages.length
   const totalPages = data?.meta?.totalPage ?? 1
+  const runningPackageId = mySubData?.data?.subscription?.package?._id ?? null
 
   const handleGetStarted = async (packageId: string) => {
     if (redirectingId) return
@@ -72,7 +78,14 @@ export default function Subscription() {
                       <p className="text-xs font-semibold text-muted-foreground">
                         {pkg.paymentType}
                       </p>
-                      <p className="text-xl font-bold text-slate-900">{pkg.title}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xl font-bold text-slate-900">{pkg.title}</p>
+                        {runningPackageId === pkg._id && (
+                          <span className="rounded-full bg-[#0C5822] px-2.5 py-1 text-[11px] font-semibold text-white">
+                            Running Package
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <span className="rounded-full bg-[#6BBF2D] px-3 py-1 text-xs font-semibold text-white">
                       {pkg.duration}
@@ -111,10 +124,14 @@ export default function Subscription() {
                   <Button
                     type="button"
                     className="mt-auto w-full rounded-xl bg-[#6BBF2D] hover:bg-[#5aad26] text-white mt-10"
-                    disabled={redirectingId !== null}
+                    disabled={redirectingId !== null || runningPackageId === pkg._id}
                     onClick={() => handleGetStarted(pkg._id)}
                   >
-                    {redirectingId === pkg._id ? 'Redirecting…' : 'Get Started'}
+                    {runningPackageId === pkg._id
+                      ? 'Current Plan'
+                      : redirectingId === pkg._id
+                        ? 'Redirecting…'
+                        : 'Get Started'}
                   </Button>
                 </div>
               ))}
