@@ -94,10 +94,10 @@ export default function CreateEditListingPage() {
     useUpdateMyServiceListingMutation()
   const [dailySchedule, setDailySchedule] = useState<
     MyListingDailySchedule | undefined
-  >(existing?.dailySchedule)
+  >(undefined)
   const [hourlySchedule, setHourlySchedule] = useState<
     MyListingHourlySchedule | undefined
-  >(existing?.hourlySchedule)
+  >(undefined)
   const [timeModalOpen, setTimeModalOpen] = useState(false)
   const [timeModalMode, setTimeModalMode] = useState<'daily' | 'hourly'>(
     'daily'

@@ -20,10 +20,6 @@ interface MultiImageUploaderProps {
   emptyDescription?: React.ReactNode
 }
 
-function isFile(x: UploadValue): x is File {
-  return typeof x !== 'string'
-}
-
 export function MultiImageUploader({
   value = [],
   onChange,

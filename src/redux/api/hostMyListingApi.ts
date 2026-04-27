@@ -101,13 +101,6 @@ const hostMyLisitngApi = baseApi.injectEndpoints({
                 { type: 'HostListing', id },
             ],
         }),
-
-        getCategories: builder.query<GetCategoriesResponse, void>({
-            query: () => ({
-                url: '/categories/public',
-                method: 'GET',
-            }),
-        }),
     }),
 })
 
@@ -116,5 +109,4 @@ export const {
     useCreateMyHostListingMutation,
     useUpdateMyHostListingMutation,
     useDeleteMyHostListingMutation,
-    useGetCategoriesQuery,
 } = hostMyLisitngApi
